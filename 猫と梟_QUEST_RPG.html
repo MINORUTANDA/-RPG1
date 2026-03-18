@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐈🦉 CAT & OWL QUEST</title>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg2: #0f1628;
+  --panel: #141c2e;
+  --panel2: #1a2438;
+  --border: #2a3a5a;
+  --teal: #00d4aa;
+  --teal2: #00a888;
+  --gold: #f0c040;
+  --gold2: #c8a030;
+  --red: #ff4455;
+  --blue: #4488ff;
+  --green: #44cc88;
+  --purple: #aa66ff;
+  --white: #e8eef8;
+  --muted: #6888aa;
+  --hp-green: #44dd88;
+  --hp-yellow: #ffcc00;
+  --hp-red: #ff4444;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DotGothic16', 'Noto Sans JP', monospace;
+  background: var(--bg);
+  color: var(--white);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ── 星空背景 ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 45%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 20%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 30%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 50%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 75%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 85%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 45% 10%, rgba(0,212,170,0.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 80% 15%, rgba(240,192,64,0.3) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── ゲームウィンドウ ── */
+#game-window {
+  position: relative;
+  z-index: 1;
+  width: 680px;
+  max-width: 98vw;
+  border: 3px solid var(--border);
+  border-radius: 4px;
+  box-shadow:
+    0 0 40px rgba(0,212,170,0.15),
+    inset 0 0 80px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+/* ── タイトルバー ── */
+#title-bar {
+  background: var(--panel);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--border);
+}
+
+#title-bar span {
+  font-size: 13px;
+  color: var(--teal);
+  letter-spacing: 0.15em;
+}
+
+#title-bar .ver {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* ── メインビュー ── */
+#main-view {
+  background: var(--bg2);
+  min-height: 260px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── マップ ── */
+#map-container {
+  width: 100%;
+  height: 260px;
+  position: relative;
+  display: none;
+}
+
+.map-cell {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.map-cell:hover { border-color: var(--teal); background: rgba(0,212,170,0.1); }
+.map-cell.current { background: rgba(0,212,170,0.2); border-color: var(--teal); animation: cellPulse 1.5s infinite; }
+.map-cell.visited { opacity: 0.5; }
+.map-cell.blocked { cursor: not-allowed; opacity: 0.3; }
+
+@keyframes cellPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,212,170,0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(0,212,170,0); }
+}
+
+/* ── キャラクタースプライト ── */
+.sprite {
+  font-size: 32px;
+  line-height: 1;
+  display: block;
+  text-align: center;
+}
+
+/* ── バトル画面 ── */
+#battle-view {
+  width: 100%;
+  padding: 20px;
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.battle-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 220px;
+  padding: 10px 20px 0;
+  position: relative;
+  background: linear-gradient(180deg, #0a0e1a 0%, #0d1525 60%, #111e30 100%);
+  overflow: hidden;
+}
+
+/* 床の光 */
+.battle-stage::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 40px;
+  background: radial-gradient(ellipse, rgba(255,68,85,0.18) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* 背景グリッド */
+.battle-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(42,58,90,0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42,58,90,0.3) 1px, transparent 1px);
+  background-size: 40px 40px;
+  perspective: 200px;
+}
+
+.enemy-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.enemy-sprite {
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: enemyFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 24px rgba(255,68,85,0.5));
+  position: relative;
+  overflow: visible;
+}
+
+.enemy-sprite svg {
+  width: 140px !important;
+  height: 140px !important;
+  display: block;
+  overflow: visible;
+}
+
+@keyframes enemyFloat {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-8px) scale(1.03); }
+}
+
+.enemy-name {
+  font-size: 13px;
+  color: var(--red);
+  letter-spacing: 0.12em;
+  background: rgba(255,68,85,0.12);
+  padding: 4px 14px;
+  border-radius: 2px;
+  border: 1px solid rgba(255,68,85,0.35);
+  font-family: 'DotGothic16', monospace;
+}
+
+.player-area { display: none; }
+.player-name { display: none; }
+
+/* プレイヤーはHPバーのみで表現 */
+
+/* ── HPバー ── */
+.hp-section { padding: 0 10px; }
+
+.hp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.hp-label {
+  font-size: 11px;
+  color: var(--muted);
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.hp-bar-wrap {
+  flex: 1;
+  height: 12px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.hp-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease, background 0.4s;
+}
+
+.hp-num {
+  font-size: 11px;
+  color: var(--white);
+  width: 60px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── ステータスパネル ── */
+#status-panel {
+  background: var(--panel);
+  border-top: 2px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.stat-item span { color: var(--gold); }
+
+/* ── メッセージウィンドウ ── */
+#message-window {
+  background: var(--panel);
+  border-top: 2px solid var(--border);
+  padding: 14px 18px;
+  min-height: 80px;
+  position: relative;
+}
+
+#message-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--white);
+  min-height: 48px;
+}
+
+#message-cursor {
+  display: inline-block;
+  width: 10px;
+  height: 14px;
+  background: var(--white);
+  margin-left: 2px;
+  animation: blink 0.8s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+
+/* ── コマンドウィンドウ ── */
+#command-window {
+  background: var(--panel2);
+  border-top: 2px solid var(--border);
+  padding: 12px 16px;
+  display: none;
+}
+
+.cmd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cmd-btn {
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--white);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmd-btn:hover:not(:disabled) {
+  background: rgba(0,212,170,0.15);
+  border-color: var(--teal);
+  color: var(--teal);
+  transform: translateX(2px);
+}
+
+.cmd-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.cmd-btn.correct {
+  background: rgba(68,204,136,0.2);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.cmd-btn.wrong {
+  background: rgba(255,68,85,0.2);
+  border-color: var(--red);
+  color: var(--red);
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+.cmd-btn.choice {
+  grid-column: span 2;
+  padding: 12px 16px;
+  font-size: 13px;
+}
+
+/* ── クエスト選択 ── */
+.quest-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 8px;
+}
+
+.quest-card:hover {
+  border-color: var(--teal);
+  background: rgba(0,212,170,0.08);
+  transform: translateX(4px);
+}
+
+.quest-card h3 {
+  font-size: 14px;
+  color: var(--teal);
+  margin-bottom: 6px;
+}
+
+.quest-card p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.quest-difficulty {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.diff-1 { background: rgba(68,204,136,0.2); color: var(--green); }
+.diff-2 { background: rgba(240,192,64,0.2); color: var(--gold); }
+.diff-3 { background: rgba(255,68,85,0.2); color: var(--red); }
+
+/* ── タイトル画面 ── */
+#title-screen {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+#title-screen h1 {
+  font-size: 28px;
+  color: var(--teal);
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 20px rgba(0,212,170,0.5);
+  margin-bottom: 8px;
+  animation: titleGlow 2s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0%,100% { text-shadow: 0 0 20px rgba(0,212,170,0.5); }
+  50%      { text-shadow: 0 0 40px rgba(0,212,170,0.9), 0 0 80px rgba(0,212,170,0.3); }
+}
+
+#title-screen h2 {
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  margin-bottom: 30px;
+}
+
+.title-logo {
+  font-size: 64px;
+  margin-bottom: 16px;
+  display: block;
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+.start-btn {
+  display: inline-block;
+  padding: 12px 40px;
+  background: var(--teal2);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.15em;
+  transition: all 0.2s;
+  animation: startPulse 2s infinite;
+}
+
+.start-btn:hover {
+  background: var(--teal);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0,212,170,0.4);
+}
+
+@keyframes startPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,212,170,0.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(0,212,170,0); }
+}
+
+/* ── ダメージエフェクト ── */
+.damage-text {
+  position: absolute;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--red);
+  text-shadow: 0 0 10px var(--red);
+  animation: damageFloat 1s ease-out forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.heal-text {
+  color: var(--green);
+  text-shadow: 0 0 10px var(--green);
+}
+
+.player-damage-text {
+  color: var(--gold);
+  text-shadow: 0 0 10px var(--gold);
+}
+
+@keyframes damageFloat {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-50px) scale(1.3); }
+}
+
+/* ── フラッシュエフェクト ── */
+.flash-red { animation: flashRed 0.3s; }
+.flash-green { animation: flashGreen 0.3s; }
+
+@keyframes flashRed {
+  0%,100% { background: var(--bg2); }
+  50%      { background: rgba(255,68,85,0.2); }
+}
+
+@keyframes flashGreen {
+  0%,100% { background: var(--bg2); }
+  50%      { background: rgba(68,204,136,0.2); }
+}
+
+/* ── NPC会話 ── */
+.npc-portrait {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px;
+  background: rgba(0,212,170,0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(0,212,170,0.15);
+  margin-bottom: 10px;
+}
+
+.npc-face {
+  font-size: 36px;
+  flex-shrink: 0;
+  background: var(--panel2);
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.npc-info { flex: 1; }
+.npc-name { font-size: 12px; color: var(--teal); margin-bottom: 4px; font-weight: 700; }
+.npc-text { font-size: 13px; color: var(--white); line-height: 1.7; }
+
+/* ── 結果画面 ── */
+#result-screen {
+  text-align: center;
+  padding: 30px 20px;
+  display: none;
+}
+
+.result-icon { font-size: 60px; margin-bottom: 12px; }
+.result-title { font-size: 22px; color: var(--gold); margin-bottom: 8px; letter-spacing: 0.15em; }
+.result-text { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 20px; }
+.score-box {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 0 auto 20px;
+  max-width: 320px;
+}
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.score-row:last-child { border: none; font-weight: 700; color: var(--gold); }
+.score-row span { color: var(--teal); }
+
+/* ── スクロールバー ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── レスポンシブ ── */
+@media (max-width: 700px) {
+  #game-window { width: 100%; border-radius: 0; }
+  .battle-stage { height: 180px; }
+  .enemy-sprite { width: 120px; height: 120px; }
+}
+</style>
+</head>
+<body>
+
+<div id="game-window">
+
+  <!-- タイトルバー -->
+  <div id="title-bar">
+    <span>🐈🦉 CAT &amp; OWL QUEST</span>
+    <span class="ver">ver 1.0 · 岩手県高度救命救急センター</span>
+  </div>
+
+  <!-- メインビュー -->
+  <div id="main-view">
+    <!-- タイトル画面 -->
+    <div id="title-screen">
+      <span class="title-logo">🐈🦉</span>
+      <h1>CAT &amp; OWL QUEST</h1>
+      <h2>〜 救命救急センターの戦士たち 〜</h2>
+      <button class="start-btn" onclick="startGame()">は　じ　め　る</button>
+    </div>
+
+    <!-- マップ -->
+    <div id="map-container"></div>
+
+    <!-- バトル -->
+    <div id="battle-view">
+      <div class="battle-stage" id="battle-stage">
+        <div class="enemy-area">
+          <div class="enemy-sprite" id="enemy-sprite">
+            <canvas id="enemy-canvas" width="140" height="140" style="display:block;"></canvas>
+          </div>
+          <div class="enemy-name" id="enemy-name">???</div>
+        </div>
+      </div>
+      <div class="hp-section" style="padding:8px 14px;">
+        <div class="hp-row">
+          <div class="hp-label" id="enemy-hp-label" style="color:var(--red);">敵 HP</div>
+          <div class="hp-bar-wrap"><div class="hp-bar" id="enemy-hp-bar" style="width:100%;background:var(--hp-green);"></div></div>
+          <div class="hp-num" id="enemy-hp-num">100/100</div>
+        </div>
+        <div class="hp-row">
+          <div class="hp-label" style="color:var(--teal);">🧑‍⚕️ 研修医</div>
+          <div class="hp-bar-wrap"><div class="hp-bar" id="player-hp-bar" style="width:100%;background:var(--hp-green);"></div></div>
+          <div class="hp-num" id="player-hp-num">100/100</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 結果 -->
+    <div id="result-screen">
+      <div class="result-icon" id="result-icon">🏆</div>
+      <div class="result-title" id="result-title">クリア！</div>
+      <div class="result-text" id="result-text"></div>
+      <div class="score-box" id="score-box"></div>
+      <button class="start-btn" onclick="resetGame()">も　う　一　度</button>
+    </div>
+  </div>
+
+  <!-- ステータス -->
+  <div id="status-panel">
+    <div class="stat-item">👤 レベル <span id="stat-lv">1</span></div>
+    <div class="stat-item">❤️ HP <span id="stat-hp">100/100</span></div>
+    <div class="stat-item">⚔️ 攻撃力 <span id="stat-atk">20</span></div>
+    <div class="stat-item">✅ 正解 <span id="stat-correct">0</span></div>
+    <div class="stat-item">🏅 スコア <span id="stat-score">0</span></div>
+  </div>
+
+  <!-- メッセージ -->
+  <div id="message-window">
+    <div id="message-text"></div>
+  </div>
+
+  <!-- コマンド -->
+  <div id="command-window">
+    <div class="cmd-grid" id="cmd-grid"></div>
+  </div>
+
+</div>
+
+<script>
+
+// ══════════════════════════════════════════
+// 敵SVGキャラクター定義
+// ══════════════════════════════════════════
+
+const ENEMY_SVGS = {
+  // 敗血症の亡霊 - 緑色の菌モンスター（正面向き）
+  sepsis1: `<svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" width="140" height="140">
+    <!-- 胴体 -->
+    <ellipse cx="70" cy="85" rx="38" ry="32" fill="#1a4a1a" stroke="#44ff44" stroke-width="2"/>
+    <!-- 頭 -->
+    <circle cx="70" cy="52" r="30" fill="#1a4a1a" stroke="#44ff44" stroke-width="2"/>
+    <!-- 目（左） -->
+    <ellipse cx="59" cy="48" rx="8" ry="10" fill="#88ff88"/>
+    <circle cx="59" cy="49" r="5" fill="#001a00"/>
+    <circle cx="61" cy="47" r="2" fill="#ffffff" opacity="0.8"/>
+    <!-- 目（右） -->
+    <ellipse cx="81" cy="48" rx="8" ry="10" fill="#88ff88"/>
+    <circle cx="81" cy="49" r="5" fill="#001a00"/>
+    <circle cx="83" cy="47" r="2" fill="#ffffff" opacity="0.8"/>
+    <!-- 口（不気味な笑み） -->
+    <path d="M58 63 Q70 72 82 63" stroke="#44ff44" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="63" cy="65" rx="3" ry="4" fill="#44ff44" opacity="0.5"/>
+    <ellipse cx="70" cy="67" rx="3" ry="4" fill="#44ff44" opacity="0.5"/>
+    <ellipse cx="77" cy="65" rx="3" ry="4" fill="#44ff44" opacity="0.5"/>
+    <!-- 腕（左） -->
+    <path d="M34 78 Q22 70 18 85 Q22 95 34 90" fill="#1a4a1a" stroke="#44ff44" stroke-width="2"/>
+    <circle cx="16" cy="87" r="7" fill="#1a4a1a" stroke="#44ff44" stroke-width="1.5"/>
+    <!-- 腕（右） -->
+    <path d="M106 78 Q118 70 122 85 Q118 95 106 90" fill="#1a4a1a" stroke="#44ff44" stroke-width="2"/>
+    <circle cx="124" cy="87" r="7" fill="#1a4a1a" stroke="#44ff44" stroke-width="1.5"/>
+    <!-- 触手 -->
+    <path d="M55 110 Q48 125 42 130" stroke="#44ff44" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M70 115 Q70 128 68 134" stroke="#44ff44" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M85 110 Q92 125 98 130" stroke="#44ff44" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- 菌の胞子 -->
+    <circle cx="40" cy="32" r="5" fill="#44ff44" opacity="0.6"/>
+    <circle cx="100" cy="28" r="4" fill="#44ff44" opacity="0.5"/>
+    <circle cx="108" cy="50" r="3" fill="#44ff44" opacity="0.4"/>
+    <circle cx="28" cy="55" r="4" fill="#44ff44" opacity="0.5"/>
+    <!-- 輝き -->
+    <circle cx="70" cy="52" r="30" fill="none" stroke="#44ff44" stroke-width="1" opacity="0.3"/>
+    <circle cx="70" cy="52" r="36" fill="none" stroke="#44ff44" stroke-width="0.5" opacity="0.15"/>
+  </svg>`,
+
+  // 耐性菌の刺客 - 鎧を着た細菌戦士（正面向き）
+  abx1: `<svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" width="140" height="140">
+    <!-- 影 -->
+    <ellipse cx="70" cy="128" rx="30" ry="6" fill="#ff6600" opacity="0.2"/>
+    <!-- 脚 -->
+    <rect x="54" y="100" width="14" height="22" rx="4" fill="#553300" stroke="#ff8800" stroke-width="1.5"/>
+    <rect x="72" y="100" width="14" height="22" rx="4" fill="#553300" stroke="#ff8800" stroke-width="1.5"/>
+    <!-- 胴体（鎧） -->
+    <rect x="44" y="65" width="52" height="40" rx="8" fill="#442200" stroke="#ff8800" stroke-width="2"/>
+    <!-- 鎧の模様 -->
+    <line x1="70" y1="65" x2="70" y2="105" stroke="#ff8800" stroke-width="1" opacity="0.5"/>
+    <line x1="44" y1="85" x2="96" y2="85" stroke="#ff8800" stroke-width="1" opacity="0.5"/>
+    <circle cx="70" cy="75" r="6" fill="#ff6600" opacity="0.6"/>
+    <!-- 首 -->
+    <rect x="62" y="55" width="16" height="14" rx="4" fill="#553300" stroke="#ff8800" stroke-width="1.5"/>
+    <!-- 頭（ヘルメット） -->
+    <path d="M42 50 Q42 28 70 26 Q98 28 98 50 L96 62 Q70 68 44 62 Z" fill="#442200" stroke="#ff8800" stroke-width="2"/>
+    <!-- バイザー（目の部分） -->
+    <path d="M50 44 L90 44 L90 54 Q70 58 50 54 Z" fill="#ff4400" opacity="0.8"/>
+    <!-- 目の光 -->
+    <ellipse cx="60" cy="49" rx="6" ry="4" fill="#ffaa00" opacity="0.9"/>
+    <ellipse cx="80" cy="49" rx="6" ry="4" fill="#ffaa00" opacity="0.9"/>
+    <ellipse cx="60" cy="49" rx="3" ry="2" fill="#ffffff" opacity="0.6"/>
+    <ellipse cx="80" cy="49" rx="3" ry="2" fill="#ffffff" opacity="0.6"/>
+    <!-- 角 -->
+    <path d="M54 30 L48 12 L58 28" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
+    <path d="M86 30 L92 12 L82 28" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
+    <!-- 腕（左） -->
+    <rect x="28" y="65" width="16" height="32" rx="6" fill="#442200" stroke="#ff8800" stroke-width="2"/>
+    <rect x="24" y="93" width="18" height="14" rx="4" fill="#553300" stroke="#ff8800" stroke-width="1.5"/>
+    <!-- 腕（右） -->
+    <rect x="96" y="65" width="16" height="32" rx="6" fill="#442200" stroke="#ff8800" stroke-width="2"/>
+    <rect x="98" y="93" width="18" height="14" rx="4" fill="#553300" stroke="#ff8800" stroke-width="1.5"/>
+    <!-- 武器（剣） -->
+    <rect x="114" y="40" width="6" height="50" rx="2" fill="#aaaaaa" stroke="#ffffff" stroke-width="1"/>
+    <rect x="108" y="58" width="18" height="5" rx="2" fill="#888888" stroke="#ffffff" stroke-width="1"/>
+    <polygon points="114,40 120,40 117,25" fill="#dddddd"/>
+    <!-- 光のエフェクト -->
+    <circle cx="70" cy="49" r="38" fill="none" stroke="#ff8800" stroke-width="1" opacity="0.2"/>
+  </svg>`,
+
+  // 多臓器不全の魔王 - 巨大な暗黒魔王（正面向き）
+  boss1: `<svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" width="140" height="140">
+    <!-- 影 -->
+    <ellipse cx="70" cy="132" rx="38" ry="7" fill="#8800ff" opacity="0.3"/>
+    <!-- マント -->
+    <path d="M30 75 Q20 110 18 135 L122 135 Q120 110 110 75 Q70 95 30 75Z" fill="#1a0033" stroke="#8800ff" stroke-width="1.5"/>
+    <!-- マントの模様 -->
+    <path d="M50 95 Q70 108 90 95" stroke="#8800ff" stroke-width="1" fill="none" opacity="0.5"/>
+    <path d="M40 110 Q70 125 100 110" stroke="#8800ff" stroke-width="1" fill="none" opacity="0.4"/>
+    <!-- 胴体 -->
+    <ellipse cx="70" cy="80" rx="32" ry="28" fill="#1a0033" stroke="#8800ff" stroke-width="2"/>
+    <!-- 胸の紋章 -->
+    <polygon points="70,65 76,76 88,76 79,84 82,96 70,89 58,96 61,84 52,76 64,76" fill="#8800ff" opacity="0.7"/>
+    <circle cx="70" cy="80" r="8" fill="#aa00ff" opacity="0.8"/>
+    <!-- 首 -->
+    <rect x="62" y="50" width="16" height="14" rx="3" fill="#1a0033" stroke="#8800ff" stroke-width="1.5"/>
+    <!-- 頭 -->
+    <circle cx="70" cy="40" r="28" fill="#1a0033" stroke="#8800ff" stroke-width="2.5"/>
+    <!-- 頭の模様 -->
+    <circle cx="70" cy="40" r="22" fill="none" stroke="#8800ff" stroke-width="1" opacity="0.4"/>
+    <!-- 目（左） - 3つの眼 -->
+    <ellipse cx="58" cy="36" rx="9" ry="11" fill="#330066"/>
+    <ellipse cx="58" cy="37" rx="6" ry="7" fill="#aa00ff"/>
+    <circle cx="58" cy="37" r="3" fill="#1a0033"/>
+    <circle cx="59.5" cy="35.5" r="1.5" fill="#ffffff" opacity="0.9"/>
+    <!-- 目（右） -->
+    <ellipse cx="82" cy="36" rx="9" ry="11" fill="#330066"/>
+    <ellipse cx="82" cy="37" rx="6" ry="7" fill="#aa00ff"/>
+    <circle cx="82" cy="37" r="3" fill="#1a0033"/>
+    <circle cx="83.5" cy="35.5" r="1.5" fill="#ffffff" opacity="0.9"/>
+    <!-- 第三の目（額） -->
+    <ellipse cx="70" cy="22" rx="6" ry="8" fill="#ff0066"/>
+    <circle cx="70" cy="23" r="3.5" fill="#1a0033"/>
+    <circle cx="71" cy="21.5" r="1.5" fill="#ffffff" opacity="0.9"/>
+    <!-- 口 -->
+    <path d="M56 50 Q62 56 70 57 Q78 56 84 50" stroke="#8800ff" stroke-width="2" fill="none"/>
+    <polygon points="60,52 64,58 68,52" fill="#8800ff" opacity="0.6"/>
+    <polygon points="72,52 76,58 80,52" fill="#8800ff" opacity="0.6"/>
+    <!-- 角（左） -->
+    <path d="M48 20 L36 2 Q42 14 52 22Z" fill="#330066" stroke="#8800ff" stroke-width="1.5"/>
+    <!-- 角（右） -->
+    <path d="M92 20 L104 2 Q98 14 88 22Z" fill="#330066" stroke="#8800ff" stroke-width="1.5"/>
+    <!-- 腕（左） - 長くて禍々しい -->
+    <path d="M40 72 Q22 68 14 80 Q10 92 18 100 Q26 108 38 100 Q32 88 40 85Z" fill="#1a0033" stroke="#8800ff" stroke-width="2"/>
+    <path d="M14 99 Q8 108 10 118" stroke="#8800ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M18 103 Q14 114 16 122" stroke="#8800ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M22 105 Q20 116 24 124" stroke="#8800ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- 腕（右） -->
+    <path d="M100 72 Q118 68 126 80 Q130 92 122 100 Q114 108 102 100 Q108 88 100 85Z" fill="#1a0033" stroke="#8800ff" stroke-width="2"/>
+    <path d="M126 99 Q132 108 130 118" stroke="#8800ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M122 103 Q126 114 124 122" stroke="#8800ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M118 105 Q120 116 116 124" stroke="#8800ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- オーラ -->
+    <circle cx="70" cy="40" r="32" fill="none" stroke="#8800ff" stroke-width="1.5" opacity="0.3"/>
+    <circle cx="70" cy="40" r="38" fill="none" stroke="#8800ff" stroke-width="1" opacity="0.15"/>
+    <!-- 魔法陣 -->
+    <circle cx="70" cy="70" r="44" fill="none" stroke="#aa00ff" stroke-width="0.5" opacity="0.2" stroke-dasharray="4 4"/>
+  </svg>`,
+};
+
+function setEnemySprite(enemyId) {
+  const canvas = document.getElementById('enemy-canvas');
+  if (!canvas) return;
+  // canvasサイズを明示的に設定（表示切替後のリセット対策）
+  canvas.width = 140;
+  canvas.height = 140;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, 140, 140);
+
+  if (enemyId === 'sepsis1') {
+    // 敗血症の亡霊（緑の菌モンスター）
+    // 胴体
+    ctx.beginPath(); ctx.ellipse(70,85,38,32,0,0,Math.PI*2);
+    ctx.fillStyle='#1a4a1a'; ctx.fill();
+    ctx.strokeStyle='#44ff44'; ctx.lineWidth=2; ctx.stroke();
+    // 頭
+    ctx.beginPath(); ctx.arc(70,52,30,0,Math.PI*2);
+    ctx.fillStyle='#1a4a1a'; ctx.fill();
+    ctx.strokeStyle='#44ff44'; ctx.lineWidth=2; ctx.stroke();
+    // 左目外
+    ctx.beginPath(); ctx.ellipse(59,48,8,10,0,0,Math.PI*2);
+    ctx.fillStyle='#88ff88'; ctx.fill();
+    // 左目内
+    ctx.beginPath(); ctx.arc(59,49,5,0,Math.PI*2);
+    ctx.fillStyle='#001a00'; ctx.fill();
+    ctx.beginPath(); ctx.arc(61,47,2,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.fill();
+    // 右目外
+    ctx.beginPath(); ctx.ellipse(81,48,8,10,0,0,Math.PI*2);
+    ctx.fillStyle='#88ff88'; ctx.fill();
+    // 右目内
+    ctx.beginPath(); ctx.arc(81,49,5,0,Math.PI*2);
+    ctx.fillStyle='#001a00'; ctx.fill();
+    ctx.beginPath(); ctx.arc(83,47,2,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.fill();
+    // 口
+    ctx.beginPath(); ctx.moveTo(58,63); ctx.quadraticCurveTo(70,72,82,63);
+    ctx.strokeStyle='#44ff44'; ctx.lineWidth=2.5; ctx.stroke();
+    // 口の胞子
+    [[63,65],[70,67],[77,65]].forEach(([x,y])=>{
+      ctx.beginPath(); ctx.ellipse(x,y,3,4,0,0,Math.PI*2);
+      ctx.fillStyle='rgba(68,255,68,0.5)'; ctx.fill();
+    });
+    // 腕左
+    ctx.beginPath(); ctx.moveTo(34,78); ctx.quadraticCurveTo(22,70,18,85);
+    ctx.quadraticCurveTo(22,95,34,90); ctx.closePath();
+    ctx.fillStyle='#1a4a1a'; ctx.fill();
+    ctx.strokeStyle='#44ff44'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(16,87,7,0,Math.PI*2);
+    ctx.fillStyle='#1a4a1a'; ctx.fill();
+    ctx.strokeStyle='#44ff44'; ctx.lineWidth=1.5; ctx.stroke();
+    // 腕右
+    ctx.beginPath(); ctx.moveTo(106,78); ctx.quadraticCurveTo(118,70,122,85);
+    ctx.quadraticCurveTo(118,95,106,90); ctx.closePath();
+    ctx.fillStyle='#1a4a1a'; ctx.fill();
+    ctx.strokeStyle='#44ff44'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(124,87,7,0,Math.PI*2);
+    ctx.fillStyle='#1a4a1a'; ctx.fill();
+    ctx.strokeStyle='#44ff44'; ctx.lineWidth=1.5; ctx.stroke();
+    // 触手
+    ctx.strokeStyle='#44ff44'; ctx.lineWidth=3; ctx.lineCap='round';
+    [[55,110,48,125,42,130],[70,115,70,128,68,134],[85,110,92,125,98,130]].forEach(([x1,y1,cx,cy,x2,y2])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(cx,cy,x2,y2); ctx.stroke();
+    });
+    // 胞子
+    [[40,32,5,0.6],[100,28,4,0.5],[108,50,3,0.4],[28,55,4,0.5]].forEach(([x,y,r,a])=>{
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(68,255,68,${a})`; ctx.fill();
+    });
+    // オーラ
+    ctx.beginPath(); ctx.arc(70,52,36,0,Math.PI*2);
+    ctx.strokeStyle='rgba(68,255,68,0.15)'; ctx.lineWidth=1; ctx.stroke();
+
+  } else if (enemyId === 'abx1') {
+    // 耐性菌の刺客（オレンジ鎧戦士）
+    // 影
+    ctx.beginPath(); ctx.ellipse(70,128,30,6,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,102,0,0.2)'; ctx.fill();
+    // 脚
+    ctx.fillStyle='#553300'; ctx.strokeStyle='#ff8800'; ctx.lineWidth=1.5;
+    [[54,100,14,22],[72,100,14,22]].forEach(([x,y,w,h])=>{
+      ctx.beginPath(); ctx.roundRect(x,y,w,h,4); ctx.fill(); ctx.stroke();
+    });
+    // 胴体
+    ctx.beginPath(); ctx.roundRect(44,65,52,40,8);
+    ctx.fillStyle='#442200'; ctx.fill();
+    ctx.strokeStyle='#ff8800'; ctx.lineWidth=2; ctx.stroke();
+    // 胴体の模様
+    ctx.strokeStyle='rgba(255,136,0,0.5)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(70,65); ctx.lineTo(70,105); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(44,85); ctx.lineTo(96,85); ctx.stroke();
+    ctx.beginPath(); ctx.arc(70,75,6,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,102,0,0.6)'; ctx.fill();
+    // 首
+    ctx.beginPath(); ctx.roundRect(62,55,16,14,4);
+    ctx.fillStyle='#553300'; ctx.fill();
+    ctx.strokeStyle='#ff8800'; ctx.lineWidth=1.5; ctx.stroke();
+    // 頭（ヘルメット）
+    ctx.beginPath();
+    ctx.moveTo(42,50); ctx.quadraticCurveTo(42,28,70,26);
+    ctx.quadraticCurveTo(98,28,98,50); ctx.lineTo(96,62);
+    ctx.quadraticCurveTo(70,68,44,62); ctx.closePath();
+    ctx.fillStyle='#442200'; ctx.fill();
+    ctx.strokeStyle='#ff8800'; ctx.lineWidth=2; ctx.stroke();
+    // バイザー
+    ctx.beginPath();
+    ctx.moveTo(50,44); ctx.lineTo(90,44); ctx.lineTo(90,54);
+    ctx.quadraticCurveTo(70,58,50,54); ctx.closePath();
+    ctx.fillStyle='rgba(255,68,0,0.8)'; ctx.fill();
+    // 目の光
+    [[60,49,6,4],[80,49,6,4]].forEach(([x,y,rx,ry])=>{
+      ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,170,0,0.9)'; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x,y,3,2,0,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.fill();
+    });
+    // 角
+    ctx.fillStyle='#ff8800';
+    ctx.beginPath(); ctx.moveTo(54,30); ctx.lineTo(48,12); ctx.lineTo(58,28); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(86,30); ctx.lineTo(92,12); ctx.lineTo(82,28); ctx.closePath(); ctx.fill();
+    // 腕
+    ctx.fillStyle='#442200'; ctx.strokeStyle='#ff8800'; ctx.lineWidth=2;
+    [[28,65,16,32],[96,65,16,32]].forEach(([x,y,w,h])=>{
+      ctx.beginPath(); ctx.roundRect(x,y,w,h,6); ctx.fill(); ctx.stroke();
+    });
+    ctx.fillStyle='#553300'; ctx.lineWidth=1.5;
+    [[24,93,18,14],[98,93,18,14]].forEach(([x,y,w,h])=>{
+      ctx.beginPath(); ctx.roundRect(x,y,w,h,4); ctx.fill(); ctx.stroke();
+    });
+    // 剣
+    ctx.fillStyle='#aaaaaa'; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(114,40,6,50,2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#888888';
+    ctx.beginPath(); ctx.roundRect(108,58,18,5,2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#dddddd';
+    ctx.beginPath(); ctx.moveTo(114,40); ctx.lineTo(120,40); ctx.lineTo(117,25); ctx.closePath(); ctx.fill();
+    // オーラ
+    ctx.beginPath(); ctx.arc(70,49,38,0,Math.PI*2);
+    ctx.strokeStyle='rgba(255,136,0,0.2)'; ctx.lineWidth=1; ctx.stroke();
+
+  } else if (enemyId === 'boss1') {
+    // 多臓器不全の魔王（紫の暗黒魔王）
+    // 影
+    ctx.beginPath(); ctx.ellipse(70,132,38,7,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(136,0,255,0.3)'; ctx.fill();
+    // マント
+    ctx.beginPath();
+    ctx.moveTo(30,75); ctx.quadraticCurveTo(20,110,18,135);
+    ctx.lineTo(122,135); ctx.quadraticCurveTo(120,110,110,75);
+    ctx.quadraticCurveTo(70,95,30,75); ctx.closePath();
+    ctx.fillStyle='#1a0033'; ctx.fill();
+    ctx.strokeStyle='#8800ff'; ctx.lineWidth=1.5; ctx.stroke();
+    // マント模様
+    ctx.strokeStyle='rgba(136,0,255,0.5)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(50,95); ctx.quadraticCurveTo(70,108,90,95); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(40,110); ctx.quadraticCurveTo(70,125,100,110); ctx.stroke();
+    // 胴体
+    ctx.beginPath(); ctx.ellipse(70,80,32,28,0,0,Math.PI*2);
+    ctx.fillStyle='#1a0033'; ctx.fill();
+    ctx.strokeStyle='#8800ff'; ctx.lineWidth=2; ctx.stroke();
+    // 胸の紋章（星形）
+    const starPts=[[70,65],[76,76],[88,76],[79,84],[82,96],[70,89],[58,96],[61,84],[52,76],[64,76]];
+    ctx.beginPath(); ctx.moveTo(starPts[0][0],starPts[0][1]);
+    starPts.slice(1).forEach(([x,y])=>ctx.lineTo(x,y)); ctx.closePath();
+    ctx.fillStyle='rgba(136,0,255,0.7)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(70,80,8,0,Math.PI*2);
+    ctx.fillStyle='rgba(170,0,255,0.8)'; ctx.fill();
+    // 首
+    ctx.beginPath(); ctx.roundRect(62,50,16,14,3);
+    ctx.fillStyle='#1a0033'; ctx.fill();
+    ctx.strokeStyle='#8800ff'; ctx.lineWidth=1.5; ctx.stroke();
+    // 頭
+    ctx.beginPath(); ctx.arc(70,40,28,0,Math.PI*2);
+    ctx.fillStyle='#1a0033'; ctx.fill();
+    ctx.strokeStyle='#8800ff'; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(70,40,22,0,Math.PI*2);
+    ctx.strokeStyle='rgba(136,0,255,0.4)'; ctx.lineWidth=1; ctx.stroke();
+    // 左目
+    ctx.beginPath(); ctx.ellipse(58,36,9,11,0,0,Math.PI*2);
+    ctx.fillStyle='#330066'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(58,37,6,7,0,0,Math.PI*2);
+    ctx.fillStyle='#aa00ff'; ctx.fill();
+    ctx.beginPath(); ctx.arc(58,37,3,0,Math.PI*2);
+    ctx.fillStyle='#1a0033'; ctx.fill();
+    ctx.beginPath(); ctx.arc(59.5,35.5,1.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fill();
+    // 右目
+    ctx.beginPath(); ctx.ellipse(82,36,9,11,0,0,Math.PI*2);
+    ctx.fillStyle='#330066'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(82,37,6,7,0,0,Math.PI*2);
+    ctx.fillStyle='#aa00ff'; ctx.fill();
+    ctx.beginPath(); ctx.arc(82,37,3,0,Math.PI*2);
+    ctx.fillStyle='#1a0033'; ctx.fill();
+    ctx.beginPath(); ctx.arc(83.5,35.5,1.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fill();
+    // 第三の目（額）
+    ctx.beginPath(); ctx.ellipse(70,22,6,8,0,0,Math.PI*2);
+    ctx.fillStyle='#ff0066'; ctx.fill();
+    ctx.beginPath(); ctx.arc(70,23,3.5,0,Math.PI*2);
+    ctx.fillStyle='#1a0033'; ctx.fill();
+    ctx.beginPath(); ctx.arc(71,21.5,1.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fill();
+    // 口
+    ctx.beginPath(); ctx.moveTo(56,50); ctx.quadraticCurveTo(62,56,70,57);
+    ctx.quadraticCurveTo(78,56,84,50);
+    ctx.strokeStyle='#8800ff'; ctx.lineWidth=2; ctx.stroke();
+    // 牙
+    ctx.fillStyle='rgba(136,0,255,0.6)';
+    [[60,52,64,58,68,52],[72,52,76,58,80,52]].forEach(([x1,y1,x2,y2,x3,y3])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.closePath(); ctx.fill();
+    });
+    // 角
+    ctx.fillStyle='#330066'; ctx.strokeStyle='#8800ff'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(48,20); ctx.lineTo(36,2); ctx.quadraticCurveTo(42,14,52,22); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(92,20); ctx.lineTo(104,2); ctx.quadraticCurveTo(98,14,88,22); ctx.closePath(); ctx.fill(); ctx.stroke();
+    // 腕左
+    ctx.fillStyle='#1a0033'; ctx.strokeStyle='#8800ff'; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(40,72); ctx.quadraticCurveTo(22,68,14,80);
+    ctx.quadraticCurveTo(10,92,18,100); ctx.quadraticCurveTo(26,108,38,100);
+    ctx.quadraticCurveTo(32,88,40,85); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle='#8800ff'; ctx.lineWidth=3; ctx.lineCap='round';
+    [[14,99,8,108,10,118],[18,103,14,114,16,122],[22,105,20,116,24,124]].forEach(([x1,y1,cx,cy,x2,y2])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(cx,cy,x2,y2); ctx.stroke();
+    });
+    // 腕右
+    ctx.fillStyle='#1a0033'; ctx.strokeStyle='#8800ff'; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(100,72); ctx.quadraticCurveTo(118,68,126,80);
+    ctx.quadraticCurveTo(130,92,122,100); ctx.quadraticCurveTo(114,108,102,100);
+    ctx.quadraticCurveTo(108,88,100,85); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle='#8800ff'; ctx.lineWidth=3; ctx.lineCap='round';
+    [[126,99,132,108,130,118],[122,103,126,114,124,122],[118,105,120,116,116,124]].forEach(([x1,y1,cx,cy,x2,y2])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(cx,cy,x2,y2); ctx.stroke();
+    });
+    // オーラ
+    ctx.beginPath(); ctx.arc(70,40,32,0,Math.PI*2);
+    ctx.strokeStyle='rgba(136,0,255,0.3)'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(70,40,38,0,Math.PI*2);
+    ctx.strokeStyle='rgba(136,0,255,0.15)'; ctx.lineWidth=1; ctx.stroke();
+    // 魔法陣
+    ctx.beginPath(); ctx.arc(70,70,44,0,Math.PI*2);
+    ctx.strokeStyle='rgba(170,0,255,0.2)'; ctx.lineWidth=0.5;
+    ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+// ══════════════════════════════════════════
+// ゲームデータ
+// ══════════════════════════════════════════
+
+const GAME_DATA = {
+  player: { name:'研修医', hp:100, maxHp:100, atk:20, lv:1, exp:0, correct:0, score:0 },
+
+  // マップセル定義
+  map: [
+    // row0
+    { id:'start', x:1, y:0, icon:'🏥', label:'救命救急センター', type:'start' },
+    { id:'npc_b', x:2, y:0, icon:'👨‍⚕️', label:'指導医', type:'npc', npc:'B' },
+    { id:'battle1', x:3, y:0, icon:'🦠', label:'?', type:'battle', enemyId:'sepsis1' },
+    { id:'npc_toku2', x:4, y:0, icon:'🧪', label:'感染症医', type:'npc', npc:'TOKU2' },
+    { id:'battle2', x:5, y:0, icon:'🦠', label:'?', type:'battle', enemyId:'abx1' },
+    { id:'npc_a', x:6, y:0, icon:'👨‍⚕️', label:'センター長', type:'npc', npc:'A' },
+    { id:'boss', x:7, y:0, icon:'👹', label:'BOSS', type:'boss', enemyId:'boss1' },
+  ],
+
+  // NPC台詞
+  npcs: {
+    B: {
+      name:'指導医',
+      face:'👨‍⚕️',
+      lines:[
+        '「よく来てくれた。指導医だ。この先には手強い感染症の魔物が待ち受けている。」',
+        '「まず基本を確認しておこう。敗血症の定義を覚えているか？」',
+        '「感染症に対する生体の調節不全な反応による、生命を脅かす臓器障害だ。」',
+        '「SOFAスコアが2点以上増加すれば臓器障害と定義される。覚えておけ。」',
+      ]
+    },
+    TOKU2: {
+      name:'感染症医',
+      face:'🧪',
+      lines:[
+        '「少し休んでいくか。感染症医だ。抗菌薬の知識を授けよう。」',
+        '「抗菌薬を選ぶ際の原則は3つ。①起因菌をカバーする ②臓器移行性 ③副作用プロファイルだ。」',
+        '「血液培養は抗菌薬投与前に必ず2セット採取すること。これは鉄則だ。」',
+        '「de-escalationを忘れるな。培養結果が出たら必ずスペクトラムを絞れ。」',
+      ]
+    },
+    A: {
+      name:'センター長',
+      face:'🏆',
+      lines:[
+        '「ここまでよく来た。私はセンター長だ。この先に最後の敵が待っている。」',
+        '「バリフラット組織の真髄を見せてもらおうか。」',
+        '「知識と勇気があれば、どんな病魔にも立ち向かえる。」',
+        '「猫と梟のチームが信じている。行け！」',
+      ]
+    }
+  },
+
+  // 敵データ
+  enemies: {
+    sepsis1: {
+      name:'敗血症の亡霊',
+      sprite:'🦠',
+      hp:60, maxHp:60,
+      atk:15,
+      reward: { exp:30, score:100 },
+      questions:[
+        {
+          q:'敗血症（Sepsis）の国際定義（Sepsis-3）で正しいのはどれか？',
+          choices:[
+            { text:'感染症に対する全身性炎症反応（SIRS基準2項目以上）', correct:false },
+            { text:'感染症に起因する生命を脅かす臓器障害', correct:true },
+            { text:'血液培養陽性かつ体温38℃以上', correct:false },
+            { text:'収縮期血圧90mmHg未満の感染症', correct:false },
+          ],
+          explanation:'Sepsis-3（2016年）では「感染症に対する生体の調節不全な反応による生命を脅かす臓器障害」と定義。SIRS基準は用いない。SOFAスコア≥2点の増加が臓器障害の指標。',
+          damage:25,
+        },
+        {
+          q:'敗血症性ショックの診断基準として正しい組み合わせはどれか？',
+          choices:[
+            { text:'適切な輸液後も平均血圧<65mmHg ＋ 乳酸値>2mmol/L', correct:true },
+            { text:'収縮期血圧<90mmHg ＋ 体温>38℃', correct:false },
+            { text:'心拍数>100/分 ＋ 血液培養陽性', correct:false },
+            { text:'尿量<0.5mL/kg/h ＋ CRP高値', correct:false },
+          ],
+          explanation:'敗血症性ショック＝適切な輸液蘇生にもかかわらず「平均血圧65mmHg以上維持に昇圧薬が必要」かつ「乳酸値>2mmol/L」の両方を満たすもの（Sepsis-3）。',
+          damage:25,
+        },
+      ]
+    },
+    abx1: {
+      name:'耐性菌の刺客',
+      sprite:'🧫',
+      hp:70, maxHp:70,
+      atk:18,
+      reward: { exp:40, score:150 },
+      questions:[
+        {
+          q:'市中肺炎（CAP）の入院患者に対する第一選択抗菌薬として最も適切なのはどれか？',
+          choices:[
+            { text:'バンコマイシン静注', correct:false },
+            { text:'βラクタム系 ＋ マクロライド系（または呼吸器系FQ）', correct:true },
+            { text:'メロペネム単剤', correct:false },
+            { text:'抗MRSA薬を必ず含める', correct:false },
+          ],
+          explanation:'CAP入院例の標準治療はβラクタム系（アンピシリン/スルバクタムなど）＋マクロライド系（アジスロマイシンなど）の併用。または呼吸器系フルオロキノロン単剤。カルバペネムは重症・耐性菌疑い例まで温存。',
+          damage:28,
+        },
+        {
+          q:'血液培養採取のタイミングとして最も正しいのはどれか？',
+          choices:[
+            { text:'抗菌薬投与開始から1時間後に採取', correct:false },
+            { text:'解熱後、体温が最も低い時間帯に採取', correct:false },
+            { text:'抗菌薬投与前に2セット以上採取', correct:true },
+            { text:'まず1セット採取し、陽性なら追加採取', correct:false },
+          ],
+          explanation:'血液培養は必ず抗菌薬投与「前」に採取。2セット採取することで感度が向上（1セットより有意に菌検出率が高い）。時間的猶予がない重症例でも、投与前の短時間で2セット採取することが推奨される。',
+          damage:28,
+        },
+      ]
+    },
+    boss1: {
+      name:'多臓器不全の魔王',
+      sprite:'👹',
+      hp:120, maxHp:120,
+      atk:25,
+      reward: { exp:100, score:500 },
+      questions:[
+        {
+          q:'敗血症患者への初期輸液蘇生として、Surviving Sepsis Campaignガイドラインが推奨するのはどれか？',
+          choices:[
+            { text:'最初の3時間で晶質液30mL/kgを投与', correct:true },
+            { text:'コロイド製剤（アルブミン）を第一選択とする', correct:false },
+            { text:'輸液は行わず直ちに昇圧薬を開始する', correct:false },
+            { text:'輸液量より血圧を優先し収縮期血圧>120mmHgを目標とする', correct:false },
+          ],
+          explanation:'SSC 2021ガイドライン：敗血症・敗血症性ショックの初期蘇生として最初の3時間以内に晶質液（生理食塩水・乳酸リンゲル等）30mL/kgの投与を推奨。輸液反応性を評価しながら継続判断する。',
+          damage:35,
+        },
+        {
+          q:'抗菌薬のde-escalationに関して正しいのはどれか？',
+          choices:[
+            { text:'培養結果が出るまでは広域抗菌薬を継続することが原則', correct:false },
+            { text:'培養結果・臨床経過をもとに、より狭域な抗菌薬へ変更する戦略', correct:true },
+            { text:'患者が改善したら直ちに抗菌薬を中止する', correct:false },
+            { text:'MRSAが検出されたらバンコマイシンを永続投与する', correct:false },
+          ],
+          explanation:'de-escalationとは、培養・感受性結果および臨床経過に基づき、広域抗菌薬から起因菌をターゲットとした狭域抗菌薬へ変更する戦略。AMR対策・副作用軽減・コスト削減に重要。治療終了とは異なる。',
+          damage:35,
+        },
+        {
+          q:'SOFAスコアで評価する臓器の組み合わせとして正しいのはどれか？',
+          choices:[
+            { text:'呼吸・凝固・肝臓・心血管・中枢神経・腎臓', correct:true },
+            { text:'呼吸・心臓・腎臓・膵臓・消化管・皮膚', correct:false },
+            { text:'呼吸・腎臓・脳・骨髄・消化管・肝臓', correct:false },
+            { text:'全臓器を等しく評価し合計点を算出', correct:false },
+          ],
+          explanation:'SOFAスコアは6臓器を各0〜4点で評価：①呼吸（PaO2/FiO2比）②凝固（血小板数）③肝臓（ビリルビン）④心血管（平均血圧・昇圧薬）⑤中枢神経（GCS）⑥腎臓（クレアチニン・尿量）。合計24点満点。',
+          damage:35,
+        },
+      ]
+    }
+  }
+};
+
+// ══════════════════════════════════════════
+// ゲーム状態
+// ══════════════════════════════════════════
+
+let G = {
+  phase: 'title', // title, map, npc, battle, result
+  player: null,
+  currentCell: 'start',
+  visitedCells: new Set(['start']),
+  currentEnemy: null,
+  currentQ: 0,
+  msgQueue: [],
+  msgTimer: null,
+  battleMode: 'command', // command, question, answer
+  stats: { correct:0, wrong:0, totalDmg:0 },
+};
+
+// ══════════════════════════════════════════
+// ユーティリティ
+// ══════════════════════════════════════════
+
+function el(id) { return document.getElementById(id); }
+
+function showSection(name) {
+  el('title-screen').style.display = 'none';
+  el('map-container').style.display = 'none';
+  el('battle-view').style.display = 'none';
+  el('result-screen').style.display = 'none';
+  if (name === 'title') el('title-screen').style.display = 'block';
+  if (name === 'map')   el('map-container').style.display = 'block';
+  if (name === 'battle') { el('battle-view').style.display = 'flex'; }
+  if (name === 'result') el('result-screen').style.display = 'block';
+}
+
+function setMsg(text) {
+  el('message-text').innerHTML = text + '<span id="message-cursor"></span>';
+}
+
+function showCmds(btns) {
+  const cw = el('command-window');
+  const grid = el('cmd-grid');
+  grid.innerHTML = '';
+  cw.style.display = 'block';
+  btns.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'cmd-btn' + (b.full ? ' choice' : '');
+    btn.innerHTML = (b.icon||'') + ' ' + b.label;
+    btn.disabled = !!b.disabled;
+    btn.onclick = b.action;
+    grid.appendChild(btn);
+  });
+}
+
+function hideCmds() { el('command-window').style.display = 'none'; }
+
+function updateStatus() {
+  const p = G.player;
+  el('stat-lv').textContent = p.lv;
+  el('stat-hp').textContent = p.hp + '/' + p.maxHp;
+  el('stat-atk').textContent = p.atk;
+  el('stat-correct').textContent = G.stats.correct;
+  el('stat-score').textContent = p.score;
+}
+
+function updateHpBar(id, cur, max) {
+  const pct = Math.max(0, cur/max*100);
+  const bar = el(id);
+  bar.style.width = pct + '%';
+  bar.style.background = pct > 50 ? 'var(--hp-green)' : pct > 25 ? 'var(--hp-yellow)' : 'var(--hp-red)';
+}
+
+function spawnDamage(x, y, text, cls='damage-text') {
+  const stage = el('battle-stage');
+  if (!stage) return;
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = text;
+  d.style.left = x + 'px';
+  d.style.top = y + 'px';
+  d.style.position = 'absolute';
+  stage.appendChild(d);
+  setTimeout(() => { if(d.parentNode) d.remove(); }, 1000);
+}
+
+// ══════════════════════════════════════════
+// ゲーム開始
+// ══════════════════════════════════════════
+
+function startGame() {
+  G.player = JSON.parse(JSON.stringify(GAME_DATA.player));
+  G.currentCell = 'start';
+  G.visitedCells = new Set(['start']);
+  G.stats = { correct:0, wrong:0, totalDmg:0 };
+  buildMap();
+  showSection('map');
+  G.phase = 'map';
+  setMsg('🏥 岩手県高度救命救急センターに到着した！\n東へ進み、感染症の魔物を倒すのだ。');
+  showMapCmds();
+  updateStatus();
+}
+
+function resetGame() {
+  G = {
+    phase:'title', player:null, currentCell:'start',
+    visitedCells:new Set(['start']),
+    currentEnemy:null, currentQ:0,
+    msgQueue:[], msgTimer:null,
+    battleMode:'command',
+    stats:{correct:0,wrong:0,totalDmg:0},
+  };
+  showSection('title');
+  setMsg('');
+  hideCmds();
+}
+
+// ══════════════════════════════════════════
+// マップ
+// ══════════════════════════════════════════
+
+function buildMap() {
+  const mc = el('map-container');
+  mc.innerHTML = '';
+  const offsetX = 20, offsetY = 110;
+  const cellW = 76;
+
+  GAME_DATA.map.forEach((cell, i) => {
+    const div = document.createElement('div');
+    div.className = 'map-cell';
+    div.id = 'cell-' + cell.id;
+    div.style.left = (offsetX + cell.x * cellW) + 'px';
+    div.style.top = offsetY + 'px';
+    div.title = cell.label;
+
+    // 矢印
+    if (i < GAME_DATA.map.length - 1) {
+      const arrow = document.createElement('div');
+      arrow.style.cssText = `position:absolute;left:${(offsetX + cell.x * cellW + 42)}px;top:${offsetY+10}px;font-size:18px;color:var(--border);pointer-events:none;`;
+      arrow.textContent = '→';
+      mc.appendChild(arrow);
+    }
+
+    const isVisited = G.visitedCells.has(cell.id);
+    const isCurrent = G.currentCell === cell.id;
+    const isAccessible = isNextCell(cell.id);
+
+    if (isCurrent) div.classList.add('current');
+    if (isVisited && !isCurrent) div.classList.add('visited');
+    if (!isAccessible && !isVisited) div.classList.add('blocked');
+
+    // 敵はクリア済みなら☑
+    let icon = cell.icon;
+    if ((cell.type === 'battle' || cell.type === 'boss') && isVisited) icon = '✅';
+
+    div.innerHTML = `<span style="font-size:28px;">${icon}</span>`;
+
+    if (isAccessible || isCurrent) {
+      div.onclick = () => moveToCell(cell.id);
+    }
+    mc.appendChild(div);
+  });
+
+  // ラベル
+  GAME_DATA.map.forEach(cell => {
+    const lbl = document.createElement('div');
+    lbl.style.cssText = `position:absolute;left:${(offsetX + cell.x * cellW - 10)}px;top:${offsetY+44}px;font-size:10px;color:var(--muted);white-space:nowrap;width:60px;text-align:center;`;
+    lbl.textContent = cell.label;
+    mc.appendChild(lbl);
+  });
+}
+
+function isNextCell(id) {
+  const cells = GAME_DATA.map;
+  const curIdx = cells.findIndex(c => c.id === G.currentCell);
+  const tgtIdx = cells.findIndex(c => c.id === id);
+  return tgtIdx === curIdx + 1;
+}
+
+function showMapCmds() {
+  const cells = GAME_DATA.map;
+  const curIdx = cells.findIndex(c => c.id === G.currentCell);
+  const nextCell = cells[curIdx + 1];
+  const btns = [];
+  if (nextCell) {
+    btns.push({ icon:'→', label:'東へ進む（' + nextCell.label + '）', full:true, action:()=>moveToCell(nextCell.id) });
+  }
+  btns.push({ icon:'📖', label:'現在地を確認', action:checkPosition });
+  showCmds(btns);
+}
+
+function checkPosition() {
+  const cell = GAME_DATA.map.find(c => c.id === G.currentCell);
+  setMsg(`📍 現在地：${cell.label}\n進捗：${G.visitedCells.size}/${GAME_DATA.map.length} エリア踏破\n✅ 正解数：${G.stats.correct}問 / スコア：${G.player.score}点`);
+}
+
+function moveToCell(id) {
+  G.currentCell = id;
+  G.visitedCells.add(id);
+  buildMap();
+
+  const cell = GAME_DATA.map.find(c => c.id === id);
+
+  if (cell.type === 'start') {
+    setMsg('🏥 救命救急センター。旅の起点だ。');
+    showMapCmds();
+  } else if (cell.type === 'npc') {
+    startNpc(cell.npc);
+  } else if (cell.type === 'battle') {
+    startBattle(cell.enemyId);
+  } else if (cell.type === 'boss') {
+    setMsg('👹 ！！！　最終ボスが現れた！！！\n「我は多臓器不全の魔王…。貴様の知識で倒してみよ！」');
+    setTimeout(() => startBattle(cell.enemyId), 1800);
+    hideCmds();
+  }
+}
+
+// ══════════════════════════════════════════
+// NPC会話
+// ══════════════════════════════════════════
+
+function startNpc(npcId) {
+  G.phase = 'npc';
+  const npc = GAME_DATA.npcs[npcId];
+  let lineIdx = 0;
+  hideCmds();
+
+  function showLine() {
+    const line = npc.lines[lineIdx];
+    const html = `<div class="npc-portrait">
+      <div class="npc-face">${npc.face}</div>
+      <div class="npc-info">
+        <div class="npc-name">${npc.name}</div>
+        <div class="npc-text">${line}</div>
+      </div>
+    </div>`;
+    setMsg(html);
+    lineIdx++;
+
+    if (lineIdx < npc.lines.length) {
+      showCmds([{ icon:'▶', label:'次へ', full:true, action:showLine }]);
+    } else {
+      showCmds([{ icon:'✅', label:'ありがとう、先に進む', full:true, action:endNpc }]);
+    }
+  }
+
+  showLine();
+}
+
+function endNpc() {
+  G.phase = 'map';
+  setMsg('先に進む準備ができた。');
+  showMapCmds();
+}
+
+// ══════════════════════════════════════════
+// バトル
+// ══════════════════════════════════════════
+
+function startBattle(enemyId) {
+  const eData = JSON.parse(JSON.stringify(GAME_DATA.enemies[enemyId]));
+  G.currentEnemy = eData;
+  G.currentQ = 0;
+  G.phase = 'battle';
+  G.battleMode = 'command';
+
+  showSection('battle');
+  // canvasが確実にDOMに表示された後に描画する（150ms待機）
+  setTimeout(() => { setEnemySprite(enemyId); }, 150);
+  el('enemy-name').textContent = eData.name;
+  el('enemy-hp-label').textContent = eData.name.substring(0,6) + ' HP';
+  updateHpBar('enemy-hp-bar', eData.hp, eData.maxHp);
+  updateHpBar('player-hp-bar', G.player.hp, G.player.maxHp);
+  el('enemy-hp-num').textContent = eData.hp + '/' + eData.maxHp;
+  el('player-hp-num').textContent = G.player.hp + '/' + G.player.maxHp;
+
+  setMsg(`⚔️ ${eData.name} が現れた！\nHP: ${eData.hp}  攻撃力: ${eData.atk}`);
+
+  setTimeout(() => {
+    showBattleCommand();
+  }, 1200);
+}
+
+function showBattleCommand() {
+  if (G.phase !== 'battle') return;
+  G.battleMode = 'command';
+  showCmds([
+    { icon:'🩺', label:'診断・治療（問題に答えて攻撃）', action:startQuestion },
+    { icon:'💊', label:'アイテムを使う（HP+20回復）', action:useItem },
+    { icon:'📖', label:'敵の情報を見る', action:checkEnemy },
+  ]);
+  setMsg('どうする？');
+}
+
+function checkEnemy() {
+  const e = G.currentEnemy;
+  setMsg(`📋 ${e.name}\nHP: ${e.hp}/${e.maxHp}\n攻撃力: ${e.atk}\n残り問題数: ${e.questions.length - G.currentQ}問`);
+  setTimeout(showBattleCommand, 1500);
+}
+
+function useItem() {
+  const heal = 20;
+  G.player.hp = Math.min(G.player.hp + heal, G.player.maxHp);
+  updateHpBar('player-hp-bar', G.player.hp, G.player.maxHp);
+  el('player-hp-num').textContent = G.player.hp + '/' + G.player.maxHp;
+  spawnDamage(480, 80, '+'+heal+' HP', 'damage-text heal-text');
+  updateStatus();
+  setMsg(`💊 アイテムを使った！ HP +${heal}回復！`);
+  el('main-view').classList.add('flash-green');
+  setTimeout(() => el('main-view').classList.remove('flash-green'), 300);
+  setTimeout(() => enemyAttack(() => {
+    if (G.player.hp > 0) showBattleCommand();
+  }), 1200);
+}
+
+function startQuestion() {
+  if (G.phase !== 'battle') return;
+  if (!G.currentEnemy) { showBattleCommand(); return; }
+  if (G.currentQ >= G.currentEnemy.questions.length) {
+    setMsg('すでにすべての問題に答えた！力を振り絞って攻撃！');
+    setTimeout(() => { playerAttack(30); }, 800);
+    return;
+  }
+
+  G.battleMode = 'question';
+  const q = G.currentEnemy.questions[G.currentQ];
+  setMsg(`🩺 【診断クイズ】\n${q.q}`);
+
+  const btns = q.choices.map((c, i) => ({
+    icon: ['Ａ','Ｂ','Ｃ','Ｄ'][i],
+    label: c.text,
+    full: true,
+    action: () => answerQuestion(i)
+  }));
+  showCmds(btns);
+}
+
+function answerQuestion(idx) {
+  if (G.phase !== 'battle' || G.battleMode !== 'question') return;
+  const q = G.currentEnemy.questions[G.currentQ];
+  if (!q) { showBattleCommand(); return; }
+  const chosen = q.choices[idx];
+  const allBtns = el('cmd-grid').querySelectorAll('.cmd-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  if (chosen.correct) {
+    // 正解
+    allBtns[idx].classList.add('correct');
+    G.stats.correct++;
+    G.player.score += 100 + G.player.lv * 10;
+    G.currentQ++;
+    updateStatus();
+
+    setMsg(`✅ 正解！\n📖 ${q.explanation}`);
+    el('main-view').classList.add('flash-green');
+    setTimeout(() => el('main-view').classList.remove('flash-green'), 300);
+
+    setTimeout(() => {
+      playerAttack(q.damage);
+    }, 1800);
+  } else {
+    // 不正解
+    allBtns[idx].classList.add('wrong');
+    G.stats.wrong++;
+
+    // 正解を光らせる
+    q.choices.forEach((c, i) => {
+      if (c.correct) allBtns[i].classList.add('correct');
+    });
+
+    setMsg(`❌ 不正解…\n📖 ${q.explanation}`);
+    el('main-view').classList.add('flash-red');
+    setTimeout(() => el('main-view').classList.remove('flash-red'), 300);
+
+    setTimeout(() => {
+      enemyAttack(() => {
+        if (G.player.hp > 0) showBattleCommand();
+      });
+    }, 1800);
+  }
+}
+
+function playerAttack(dmg) {
+  const e = G.currentEnemy;
+  e.hp = Math.max(0, e.hp - dmg);
+  updateHpBar('enemy-hp-bar', e.hp, e.maxHp);
+  el('enemy-hp-num').textContent = e.hp + '/' + e.maxHp;
+  spawnDamage(80, 40, '-' + dmg);
+  const es = el('enemy-sprite');
+  if(es){ es.style.animation = 'none'; setTimeout(() => { if(el('enemy-sprite')) el('enemy-sprite').style.animation = ''; }, 300); }
+
+  if (e.hp <= 0) {
+    setTimeout(battleVictory, 800);
+  } else {
+    setMsg(`⚔️ ${dmg}のダメージを与えた！\n敵残りHP: ${e.hp}`);
+    setTimeout(() => {
+      enemyAttack(() => {
+        if (G.player.hp > 0) showBattleCommand();
+      });
+    }, 1200);
+  }
+}
+
+function enemyAttack(callback) {
+  const e = G.currentEnemy;
+  const dmg = Math.floor(e.atk * (0.8 + Math.random() * 0.4));
+  G.player.hp = Math.max(0, G.player.hp - dmg);
+  G.stats.totalDmg += dmg;
+  updateHpBar('player-hp-bar', G.player.hp, G.player.maxHp);
+  el('player-hp-num').textContent = G.player.hp + '/' + G.player.maxHp;
+  spawnDamage(480, 80, '-' + dmg, 'damage-text player-damage-text');
+  const ps = el('player-sprite');
+  if(ps){ ps.style.filter = 'brightness(2) hue-rotate(180deg)'; setTimeout(() => { if(el('player-sprite')) el('player-sprite').style.filter = ''; }, 300); }
+  updateStatus();
+
+  setMsg(`💥 ${e.name}の攻撃！ ${dmg}のダメージを受けた！\nあなたのHP: ${G.player.hp}/${G.player.maxHp}`);
+
+  if (G.player.hp <= 0) {
+    setTimeout(battleDefeat, 1000);
+  } else {
+    setTimeout(callback, 1200);
+  }
+}
+
+function battleVictory() {
+  const e = G.currentEnemy;
+  // 撃破時はcanvasをクリアするだけ（opacity変更しない）
+  const defeatCanvas = el('enemy-canvas');
+  if(defeatCanvas){
+    const dCtx = defeatCanvas.getContext('2d');
+    if(dCtx){
+      // ✕マークを描画して撃破を表現
+      dCtx.clearRect(0,0,140,140);
+      dCtx.strokeStyle = '#ff4455';
+      dCtx.lineWidth = 8;
+      dCtx.lineCap = 'round';
+      dCtx.beginPath(); dCtx.moveTo(40,40); dCtx.lineTo(100,100); dCtx.stroke();
+      dCtx.beginPath(); dCtx.moveTo(100,40); dCtx.lineTo(40,100); dCtx.stroke();
+    }
+  }
+  G.player.exp += e.reward.exp;
+  G.player.score += e.reward.score;
+
+  // レベルアップ判定
+  if (G.player.exp >= G.player.lv * 50) {
+    G.player.lv++;
+    G.player.maxHp += 20;
+    G.player.hp = G.player.maxHp;
+    G.player.atk += 5;
+    setMsg(`🎉 ${e.name}を倒した！\n✨ レベルアップ！ Lv.${G.player.lv}\n最大HP+20 攻撃力+5`);
+  } else {
+    setMsg(`🎉 ${e.name}を倒した！\n経験値+${e.reward.exp} スコア+${e.reward.score}`);
+  }
+
+  updateStatus();
+
+  setTimeout(() => {
+    showSection('map');
+    G.phase = 'map';
+    buildMap();
+
+    // ボス撃破なら終了
+    const cell = GAME_DATA.map.find(c => c.id === G.currentCell);
+    if (cell && cell.type === 'boss') {
+      setTimeout(showEnding, 1200);
+    } else {
+      setMsg('敵を倒した！先へ進もう。');
+      showMapCmds();
+    }
+  }, 2000);
+}
+
+function battleDefeat() {
+  hideCmds();
+  setMsg('😵 力尽きた…\nしかし、知識は残る。もう一度挑戦しろ！');
+  G.phase = 'result';
+  setTimeout(() => showResult(false), 2000);
+}
+
+// ══════════════════════════════════════════
+// エンディング・結果
+// ══════════════════════════════════════════
+
+function showEnding() {
+  setMsg('🏆 魔王を倒した！\n救命救急センターに平和が戻った…\n「猫と梟の知識が世界を救った！」');
+  hideCmds();
+  setTimeout(() => showResult(true), 3000);
+}
+
+function showResult(cleared) {
+  showSection('result');
+  G.phase = 'result';
+
+  if (cleared) {
+    el('result-icon').textContent = '🏆';
+    el('result-title').textContent = 'ゲームクリア！';
+    el('result-text').textContent = '救命救急センターの平和を守った。\n敗血症・感染症の知識を存分に発揮した証だ。\nこの知識を実臨床でも活かせ！';
+  } else {
+    el('result-icon').textContent = '💀';
+    el('result-title').textContent = 'ゲームオーバー';
+    el('result-text').textContent = '倒れてしまった…しかし知識は残る。\nもう一度挑戦して、正しい答えを覚えよう。';
+  }
+
+  const accuracy = G.stats.correct + G.stats.wrong > 0
+    ? Math.round(G.stats.correct / (G.stats.correct + G.stats.wrong) * 100)
+    : 0;
+
+  el('score-box').innerHTML = `
+    <div class="score-row">最終スコア <span>${G.player.score}点</span></div>
+    <div class="score-row">到達レベル <span>Lv.${G.player.lv}</span></div>
+    <div class="score-row">正解数 <span>${G.stats.correct}問</span></div>
+    <div class="score-row">不正解数 <span>${G.stats.wrong}問</span></div>
+    <div class="score-row">正答率 <span>${accuracy}%</span></div>
+  `;
+
+  hideCmds();
+  setMsg(cleared ? '🐈🦉 猫と梟の精鋭よ、お疲れ様！' : '次こそ打ち勝て！知識が最大の武器だ。');
+}
+
+// ══════════════════════════════════════════
+// 初期化
+// ══════════════════════════════════════════
+
+showSection('title');
+setMsg('🐈🦉 CAT & OWL QUEST へようこそ。\n岩手県高度救命救急センターを舞台にした医療RPGだ。\n敗血症・感染症の知識で魔物を倒せ！');
+hideCmds();
+</script>
+</body>
+</html>
