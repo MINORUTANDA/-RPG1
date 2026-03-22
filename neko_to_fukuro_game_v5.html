@@ -1499,60 +1499,68 @@ let currentMentorType = 'power';
 function drawEndingMentor(mentorType, endType) {
   if (endType === 'normal') return drawTanda('neutral', 0.5);
 
-  // ---- パワハラ × ハッピー：筋肉イケメン ----
+  // ---- パワハラ × ハッピー：大仏 ----
   if (mentorType === 'power' && endType === 'happy') {
-    return `<svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
-      <!-- 光輪 -->
-      <circle cx="50" cy="22" r="18" fill="none" stroke="rgba(255,180,50,0.6)" stroke-width="2.5">
-        <animate attributeName="r" values="16;22;16" dur="1.5s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite"/>
+    return `<svg viewBox="0 0 100 145" xmlns="http://www.w3.org/2000/svg">
+      <!-- 後光（放射線） -->
+      ${Array.from({length:16},(_,i)=>{
+        const a=i*(Math.PI*2/16), x1=50+22*Math.cos(a), y1=48+22*Math.sin(a), x2=50+34*Math.cos(a), y2=48+34*Math.sin(a);
+        return '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="rgba(255,210,50,0.55)" stroke-width="1.5"/>';
+      }).join('')}
+      <!-- 後光円 -->
+      <circle cx="50" cy="48" r="30" fill="none" stroke="rgba(255,200,40,0.35)" stroke-width="3">
+        <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.5s" repeatCount="indefinite"/>
       </circle>
-      <!-- 盛り上がった体 -->
-      <ellipse cx="50" cy="110" rx="34" ry="32" fill="#2c5f8a"/>
-      <!-- 大胸筋 -->
-      <ellipse cx="38" cy="100" rx="12" ry="10" fill="#3a7ab5"/>
-      <ellipse cx="62" cy="100" rx="12" ry="10" fill="#3a7ab5"/>
-      <!-- 腹筋 -->
-      <rect x="42" y="108" width="7" height="6" rx="2" fill="#3a7ab5"/>
-      <rect x="51" y="108" width="7" height="6" rx="2" fill="#3a7ab5"/>
-      <rect x="42" y="116" width="7" height="6" rx="2" fill="#3a7ab5"/>
-      <rect x="51" y="116" width="7" height="6" rx="2" fill="#3a7ab5"/>
-      <!-- 太い腕 -->
-      <ellipse cx="20" cy="105" rx="10" ry="18" fill="#2c5f8a"/>
-      <ellipse cx="80" cy="105" rx="10" ry="18" fill="#2c5f8a"/>
-      <ellipse cx="20" cy="118" rx="8" ry="9" fill="#e8b896"/>
-      <ellipse cx="80" cy="118" rx="8" ry="9" fill="#e8b896"/>
+      <!-- 台座（蓮台） -->
+      <ellipse cx="50" cy="138" rx="36" ry="7" fill="#c8a030" opacity="0.9"/>
+      <ellipse cx="50" cy="133" rx="30" ry="5" fill="#e0b840"/>
+      <!-- 蓮弁 -->
+      ${[-28,-18,-8,2,12,22,28].map(ox=>'<ellipse cx="'+(50+ox)+'" cy="130" rx="5" ry="8" fill="#e8c850" stroke="#c8a030" stroke-width="0.5"/>').join('')}
+      <!-- 袈裟・体 -->
+      <path d="M18,96 Q14,145 18,145 L82,145 Q86,145 82,96 Q70,88 50,88 Q30,88 18,96" fill="#b8820a"/>
+      <!-- 袈裟の折り目 -->
+      <path d="M50,88 Q44,105 38,130" fill="none" stroke="#a06808" stroke-width="1.5"/>
+      <path d="M50,88 Q56,105 62,130" fill="none" stroke="#a06808" stroke-width="1.5"/>
+      <path d="M30,100 Q50,108 70,100" fill="none" stroke="#a06808" stroke-width="1"/>
+      <path d="M24,115 Q50,124 76,115" fill="none" stroke="#a06808" stroke-width="1"/>
+      <!-- 合掌した手 -->
+      <ellipse cx="50" cy="110" rx="10" ry="7" fill="#d4956e"/>
+      <path d="M40,108 Q50,102 60,108" fill="none" stroke="#b07848" stroke-width="1.2"/>
       <!-- 首 -->
-      <rect x="42" y="74" width="16" height="16" rx="5" fill="#e8b896"/>
-      <!-- イケメン顔（細面・彫り深） -->
-      <ellipse cx="50" cy="50" rx="22" ry="26" fill="#e8b896"/>
-      <!-- あご -->
-      <ellipse cx="50" cy="72" rx="12" ry="6" fill="#e8b896"/>
-      <!-- 整った黒髪 -->
-      <ellipse cx="50" cy="26" rx="22" ry="12" fill="#1a0a00"/>
-      <path d="M28,32 Q30,22 50,20 Q70,22 72,32" fill="#1a0a00"/>
-      <path d="M28,26 Q26,36 28,44" fill="#1a0a00"/>
-      <path d="M72,26 Q74,36 72,44" fill="#1a0a00"/>
-      <!-- 耳 -->
-      <ellipse cx="28" cy="50" rx="4" ry="5" fill="#e8b896"/>
-      <ellipse cx="72" cy="50" rx="4" ry="5" fill="#e8b896"/>
-      <!-- 眉（凛々しく） -->
-      <path d="M32,40 L44,38" fill="none" stroke="#1a0a00" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M56,38 L68,40" fill="none" stroke="#1a0a00" stroke-width="2.5" stroke-linecap="round"/>
-      <!-- 目（鋭い二重） -->
-      <ellipse cx="38" cy="48" rx="6" ry="5" fill="white"/>
-      <ellipse cx="38" cy="49" rx="4" ry="4" fill="#1a0a00"/>
-      <circle cx="37" cy="48" r="1.2" fill="rgba(255,255,255,0.7)"/>
-      <ellipse cx="62" cy="48" rx="6" ry="5" fill="white"/>
-      <ellipse cx="62" cy="49" rx="4" ry="4" fill="#1a0a00"/>
-      <circle cx="61" cy="48" r="1.2" fill="rgba(255,255,255,0.7)"/>
-      <!-- 鼻（高い） -->
-      <path d="M48,56 Q50,62 52,56" fill="none" stroke="#d4956e" stroke-width="1.5"/>
-      <!-- 口（にやり） -->
-      <path d="M40,66 Q50,72 60,66" fill="none" stroke="#8a4020" stroke-width="2" stroke-linecap="round"/>
-      <!-- 筋肉スパーク -->
-      <text x="10" y="95" font-size="14" opacity="0.8">💪</text>
-      <text x="76" y="95" font-size="14" opacity="0.8">💪</text>
+      <rect x="43" y="82" width="14" height="10" rx="4" fill="#d4b870"/>
+      <!-- 首の三道 -->
+      <path d="M43,85 Q50,86 57,85" fill="none" stroke="#a08030" stroke-width="0.8"/>
+      <path d="M43,88 Q50,89 57,88" fill="none" stroke="#a08030" stroke-width="0.8"/>
+      <!-- 顔（大仏らしく丸く穏やか） -->
+      <ellipse cx="50" cy="58" rx="24" ry="26" fill="#d4b870"/>
+      <ellipse cx="50" cy="78" rx="15" ry="7" fill="#d4b870"/>
+      <!-- 大きな耳たぶ（大仏の特徴） -->
+      <ellipse cx="26" cy="60" rx="6" ry="10" fill="#d4b870" stroke="#a08030" stroke-width="0.5"/>
+      <ellipse cx="74" cy="60" rx="6" ry="10" fill="#d4b870" stroke="#a08030" stroke-width="0.5"/>
+      <!-- 螺髪（頭のぶつぶつ） -->
+      ${Array.from({length:18},(_,i)=>{
+        const cols=5, row=Math.floor(i/cols), col=i%cols;
+        const bx=32+col*9+(row%2)*4.5, by=32+row*7;
+        if(bx>72||by>54) return '';
+        return '<circle cx="'+bx.toFixed(0)+'" cy="'+by.toFixed(0)+'" r="3.2" fill="#8a6010"/><circle cx="'+bx.toFixed(0)+'" cy="'+by.toFixed(0)+'" r="2" fill="#b08020"/>';
+      }).join('')}
+      <!-- 白毫（眉間の玉） -->
+      <circle cx="50" cy="54" r="2" fill="white"/>
+      <circle cx="50" cy="54" r="1" fill="#ffffa0"/>
+      <!-- 細く穏やかな眉 -->
+      <path d="M36,48 Q44,46 46,48" fill="none" stroke="#8a6010" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M54,48 Q56,46 64,48" fill="none" stroke="#8a6010" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- 半眼（大仏の目） -->
+      <ellipse cx="40" cy="58" rx="6" ry="3" fill="#6a4010"/>
+      <ellipse cx="60" cy="58" rx="6" ry="3" fill="#6a4010"/>
+      <path d="M34,57 Q40,62 46,57" fill="none" stroke="#8a6010" stroke-width="1"/>
+      <path d="M54,57 Q60,62 66,57" fill="none" stroke="#8a6010" stroke-width="1"/>
+      <!-- 鼻（広めで穏やか） -->
+      <path d="M46,64 Q50,70 54,64" fill="none" stroke="#a08030" stroke-width="1.5"/>
+      <ellipse cx="44" cy="67" rx="3" ry="2" fill="#c09040" opacity="0.5"/>
+      <ellipse cx="56" cy="67" rx="3" ry="2" fill="#c09040" opacity="0.5"/>
+      <!-- 口（穏やかな微笑） -->
+      <path d="M40,76 Q50,82 60,76" fill="none" stroke="#8a5010" stroke-width="1.8" stroke-linecap="round"/>
     </svg>`;
   }
 
@@ -1591,47 +1599,105 @@ function drawEndingMentor(mentorType, endType) {
     </svg>`;
   }
 
-  // ---- おどおど × ハッピー：スマートイケメン（眼鏡・髭なし） ----
+  // ---- おどおど × ハッピー：神様 ----
   if (mentorType === 'timid' && endType === 'happy') {
-    return `<svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
-      <!-- きらきら -->
-      <text x="5" y="20" font-size="12">✨</text>
-      <text x="78" y="18" font-size="12">✨</text>
-      <text x="82" y="45" font-size="10">⭐</text>
-      <!-- スーツ -->
-      <rect x="20" y="88" width="60" height="52" rx="10" fill="#1a2a4a"/>
-      <polygon points="38,88 50,104 62,88" fill="#162038"/>
-      <polygon points="44,88 50,100 56,88" fill="#c8d8f0"/>
-      <!-- ネクタイ（赤） -->
-      <polygon points="48,92 50,120 52,92 51,98 49,98" fill="#c0392b"/>
+    return `<svg viewBox="0 0 100 145" xmlns="http://www.w3.org/2000/svg">
+      <!-- 後光（虹色放射） -->
+      ${Array.from({length:20},(_,i)=>{
+        const a=i*(Math.PI*2/20), cols=['#ff6060','#ff9900','#ffee00','#66dd22','#22aaff','#aa44ff'];
+        const c=cols[i%cols.length], x1=50+24*Math.cos(a), y1=52+24*Math.sin(a), x2=50+40*Math.cos(a), y2=52+40*Math.sin(a);
+        return '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="'+c+'" stroke-width="1.8" opacity="0.6"/>';
+      }).join('')}
+      <circle cx="50" cy="52" r="28" fill="none" stroke="rgba(255,200,100,0.4)" stroke-width="2.5">
+        <animate attributeName="r" values="26;32;26" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.6;0.1;0.6" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <!-- 宝冠（きらびやか） -->
+      <path d="M28,32 L32,18 L38,28 L44,12 L50,26 L56,12 L62,28 L68,18 L72,32 Z" fill="#d4a010" stroke="#ffcc20" stroke-width="0.8"/>
+      <ellipse cx="50" cy="32" rx="22" ry="6" fill="#e8b820"/>
+      <!-- 宝冠の宝石 -->
+      <circle cx="50" cy="18" r="3" fill="#ee2244"/>
+      <circle cx="38" cy="22" r="2.5" fill="#2244ee"/>
+      <circle cx="62" cy="22" r="2.5" fill="#22aa44"/>
+      <circle cx="32" cy="28" r="2" fill="#ee8800"/>
+      <circle cx="68" cy="28" r="2" fill="#aa22ee"/>
+      <!-- 4本の腕 -->
+      <!-- 上の腕（右） -->
+      <path d="M68,72 Q84,54 88,42" fill="none" stroke="#f0c890" stroke-width="7" stroke-linecap="round"/>
+      <ellipse cx="88" cy="40" rx="6" ry="5" fill="#f0c890"/>
+      <!-- 上の腕（左） -->
+      <path d="M32,72 Q16,54 12,42" fill="none" stroke="#f0c890" stroke-width="7" stroke-linecap="round"/>
+      <ellipse cx="12" cy="40" rx="6" ry="5" fill="#f0c890"/>
+      <!-- 下の腕（右） -->
+      <path d="M68,90 Q86,96 90,108" fill="none" stroke="#f0c890" stroke-width="7" stroke-linecap="round"/>
+      <ellipse cx="91" cy="110" rx="6" ry="5" fill="#f0c890"/>
+      <!-- 下の腕（左） -->
+      <path d="M32,90 Q14,96 10,108" fill="none" stroke="#f0c890" stroke-width="7" stroke-linecap="round"/>
+      <ellipse cx="9" cy="110" rx="6" ry="5" fill="#f0c890"/>
+      <!-- 持ち物 -->
+      <!-- 右上：蓮の花 -->
+      <circle cx="88" cy="38" r="5" fill="#ff88aa"/>
+      <circle cx="84" cy="34" r="3.5" fill="#ff66aa"/>
+      <circle cx="92" cy="34" r="3.5" fill="#ff66aa"/>
+      <circle cx="88" cy="30" r="3" fill="#ffaacc"/>
+      <!-- 左上：ほら貝 -->
+      <ellipse cx="12" cy="40" rx="5" ry="6" fill="white" stroke="#ddd" stroke-width="0.8"/>
+      <path d="M10,36 Q12,44 14,36" fill="none" stroke="#bbb" stroke-width="0.8"/>
+      <!-- 右下：円盤（チャクラ） -->
+      <circle cx="91" cy="110" r="6" fill="none" stroke="#ff8800" stroke-width="2"/>
+      <circle cx="91" cy="110" r="3" fill="#ffaa00"/>
+      <!-- 左下：棍棒 -->
+      <rect x="5" y="106" width="5" height="14" rx="2" fill="#8a5010"/>
+      <circle cx="7" cy="106" r="4" fill="#a06818"/>
+      <!-- 体（サリー風衣装） -->
+      <path d="M26,80 Q20,145 24,145 L76,145 Q80,145 74,80 Q62,72 50,72 Q38,72 26,80" fill="#e8388a"/>
+      <!-- 衣装の縁取り金 -->
+      <path d="M26,80 Q38,72 50,72 Q62,72 74,80" fill="none" stroke="#ffd700" stroke-width="2"/>
+      <path d="M22,100 Q50,112 78,100" fill="none" stroke="#ffd700" stroke-width="1.5"/>
+      <path d="M20,120 Q50,133 80,120" fill="none" stroke="#ffd700" stroke-width="1.5"/>
+      <!-- 腰のベルト -->
+      <ellipse cx="50" cy="84" rx="22" ry="5" fill="#c0206a" stroke="#ffd700" stroke-width="1.2"/>
       <!-- 首 -->
-      <rect x="43" y="78" width="14" height="14" rx="4" fill="#e8b896"/>
-      <!-- 細面のイケメン頭 -->
-      <ellipse cx="50" cy="46" rx="20" ry="24" fill="#e8b896"/>
-      <ellipse cx="50" cy="68" rx="10" ry="5" fill="#e8b896"/>
+      <rect x="43" y="68" width="14" height="10" rx="4" fill="#f0c890"/>
+      <!-- 首飾り -->
+      <path d="M36,74 Q50,80 64,74" fill="none" stroke="#ffd700" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="50" cy="80" r="2.5" fill="#ee2244"/>
+      <circle cx="42" cy="77" r="2" fill="#2244ee"/>
+      <circle cx="58" cy="77" r="2" fill="#22aa44"/>
+      <!-- 顔（穏やかで美しく） -->
+      <ellipse cx="50" cy="54" rx="20" ry="22" fill="#f0c890"/>
+      <ellipse cx="50" cy="72" rx="12" ry="5" fill="#f0c890"/>
       <!-- 耳 -->
-      <ellipse cx="30" cy="48" rx="4" ry="5" fill="#e8b896"/>
-      <ellipse cx="70" cy="48" rx="4" ry="5" fill="#e8b896"/>
-      <!-- 整った短髪 -->
-      <ellipse cx="50" cy="26" rx="20" ry="10" fill="#1a0a00"/>
-      <path d="M30,30 Q32,22 50,20 Q68,22 70,30" fill="#1a0a00"/>
-      <!-- 綺麗な眉 -->
-      <path d="M34,40 L44,38" fill="none" stroke="#1a0a00" stroke-width="2" stroke-linecap="round"/>
-      <path d="M56,38 L66,40" fill="none" stroke="#1a0a00" stroke-width="2" stroke-linecap="round"/>
-      <!-- パッチリ目 -->
-      <ellipse cx="40" cy="48" rx="6" ry="6" fill="white"/>
-      <ellipse cx="40" cy="49" rx="4" ry="4" fill="#1a0a00"/>
-      <circle cx="38" cy="47" r="1.5" fill="rgba(255,255,255,0.8)"/>
-      <ellipse cx="60" cy="48" rx="6" ry="6" fill="white"/>
-      <ellipse cx="60" cy="49" rx="4" ry="4" fill="#1a0a00"/>
-      <circle cx="58" cy="47" r="1.5" fill="rgba(255,255,255,0.8)"/>
-      <!-- 鼻（すっきり） -->
-      <path d="M48,57 Q50,62 52,57" fill="none" stroke="#d4956e" stroke-width="1.2"/>
-      <!-- 笑顔 -->
-      <path d="M38,66 Q50,75 62,66" fill="none" stroke="#8a4020" stroke-width="2" stroke-linecap="round"/>
-      <!-- 頬染め -->
-      <ellipse cx="34" cy="60" rx="5" ry="3" fill="#ffaaaa" opacity="0.5"/>
-      <ellipse cx="66" cy="60" rx="5" ry="3" fill="#ffaaaa" opacity="0.5"/>
+      <ellipse cx="30" cy="56" rx="4" ry="5" fill="#f0c890"/>
+      <ellipse cx="70" cy="56" rx="4" ry="5" fill="#f0c890"/>
+      <!-- 耳飾り -->
+      <circle cx="28" cy="60" r="3" fill="#ffd700" stroke="#e0a800" stroke-width="0.5"/>
+      <circle cx="72" cy="60" r="3" fill="#ffd700" stroke="#e0a800" stroke-width="0.5"/>
+      <!-- 第三の眼 -->
+      <ellipse cx="50" cy="44" rx="4" ry="2.5" fill="#ee2244"/>
+      <ellipse cx="50" cy="44" rx="2.5" ry="1.5" fill="#220044"/>
+      <!-- 眉（アーチ） -->
+      <path d="M34,48 Q42,45 48,48" fill="none" stroke="#3a1a00" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M52,48 Q58,45 66,48" fill="none" stroke="#3a1a00" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- 目（アーモンド型・神秘的） -->
+      <ellipse cx="40" cy="54" rx="7" ry="5" fill="white"/>
+      <ellipse cx="40" cy="55" rx="4.5" ry="4" fill="#1a0050"/>
+      <circle cx="38" cy="53" r="1.5" fill="rgba(255,255,255,0.8)"/>
+      <path d="M33,52 Q40,50 47,52" fill="none" stroke="#3a1a00" stroke-width="0.8"/>
+      <path d="M33,58 Q40,60 47,58" fill="none" stroke="#3a1a00" stroke-width="0.8"/>
+      <ellipse cx="60" cy="54" rx="7" ry="5" fill="white"/>
+      <ellipse cx="60" cy="55" rx="4.5" ry="4" fill="#1a0050"/>
+      <circle cx="58" cy="53" r="1.5" fill="rgba(255,255,255,0.8)"/>
+      <path d="M53,52 Q60,50 67,52" fill="none" stroke="#3a1a00" stroke-width="0.8"/>
+      <path d="M53,58 Q60,60 67,58" fill="none" stroke="#3a1a00" stroke-width="0.8"/>
+      <!-- 鼻 -->
+      <path d="M47,62 Q50,67 53,62" fill="none" stroke="#c09060" stroke-width="1.5"/>
+      <!-- 鼻ピアス -->
+      <circle cx="54" cy="65" r="1.5" fill="#ffd700"/>
+      <!-- 口（神秘の微笑） -->
+      <path d="M40,70 Q50,77 60,70" fill="none" stroke="#c07040" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- 唇 -->
+      <path d="M40,70 Q50,74 60,70" fill="#ee6688" opacity="0.5"/>
     </svg>`;
   }
 
