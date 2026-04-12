@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>症状逆引き | nekoToFukuro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+:root{
+  --bg:#f7f6f2;--sur:#fff;--sur2:#f1efe9;--sur3:#e8e5de;
+  --bd:#dbd7cf;--bd2:#ccc8bf;
+  --tx:#1a1816;--tx2:#5a5550;--tx3:#9a9590;
+  --red:#bf2418;--rbg:#fef1f0;--rbd:#f0bab5;
+  --org:#a84e00;--obg:#fef6ef;--obd:#f0cfaa;
+  --grn:#1a7535;--gbg:#f0f9f2;--gbd:#a8d9b5;
+  --blu:#1a4888;--bbg:#f0f5fd;--bbd:#adc4f0;
+  --pur:#5a38b5;--pubg:#f4f1fd;--pubd:#c5b8f0;
+  --mono:'IBM Plex Mono',monospace;--sans:'Noto Sans JP',sans-serif;--r:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh}
+
+.hd{background:var(--tx);color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200}
+.hd-logo{font-family:var(--mono);font-size:11px;color:#777;letter-spacing:.12em;flex-shrink:0}
+.hd-logo em{color:#e06;font-style:normal}
+.hd h1{font-size:14px;font-weight:700;letter-spacing:.04em}
+.hd-spacer{flex:1}
+.nav-link{font-size:12px;color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #444;border-radius:3px;transition:color .15s;flex-shrink:0}
+.nav-link:hover,.nav-link.active{color:#fff;border-color:#888}
+.nav-link.active{background:#333}
+
+/* ── AG/OG バー ── */
+.calc-bar{background:var(--bbg);border-bottom:2px solid var(--bbd);padding:11px 24px}
+.calc-bar-inner{max-width:1120px;margin:0 auto}
+.calc-bar-title{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--blu);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.calc-bar-title span{background:var(--blu);color:#fff;padding:1px 7px;border-radius:2px;font-size:9px}
+.calc-fields{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.cf-g{display:flex;flex-direction:column;gap:3px}
+.cf-g label{font-size:10px;font-family:var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.06em}
+.cf-g input{width:78px;border:1px solid var(--bbd);border-radius:4px;padding:6px 8px;font-family:var(--mono);font-size:13px;background:var(--sur);color:var(--tx);outline:none}
+.cf-g input:focus{border-color:var(--blu)}
+.calc-go{padding:7px 16px;background:var(--blu);color:#fff;border:none;border-radius:4px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:pointer;text-transform:uppercase;align-self:flex-end;transition:opacity .15s}
+.calc-go:hover{opacity:.85}
+.calc-chips{margin-top:9px;display:none;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{padding:5px 11px;border-radius:4px;font-family:var(--mono);font-size:12px;border:1px solid var(--bbd);background:var(--sur);display:inline-flex;align-items:center;gap:5px}
+.chip.alert{background:var(--rbg);border-color:var(--rbd);color:var(--red)}
+.chip.warn{background:var(--obg);border-color:var(--obd);color:var(--org)}
+.chip.ok{background:var(--gbg);border-color:var(--gbd);color:var(--grn)}
+.chip-label{font-size:10px;color:var(--tx3)}
+.chip-val{font-weight:600}
+.calc-hint{font-size:11px;color:var(--tx3);margin-top:5px;line-height:1.5}
+
+/* ── メインレイアウト ── */
+.wrap{max-width:1120px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:296px 1fr;gap:20px;align-items:start}
+@media(max-width:860px){.wrap{grid-template-columns:1fr;padding:14px}}
+
+/* ── サイドバー（症状チェック） ── */
+.sidebar{position:sticky;top:52px}
+.side-card{background:var(--sur);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.side-hd{padding:9px 14px;border-bottom:1px solid var(--bd);background:var(--sur2);font-family:var(--mono);font-size:10px;letter-spacing:.09em;color:var(--tx3);text-transform:uppercase}
+.side-body{padding:12px 14px}
+.sx-group{margin-bottom:12px}
+.sg-title{font-size:10px;font-family:var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--bd);padding-bottom:4px;margin-bottom:7px}
+.sx-item{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:4px;cursor:pointer;transition:background .1s;user-select:none;font-size:12.5px}
+.sx-item:hover{background:var(--sur2)}
+.sx-item.checked{background:var(--bbg)}
+.sx-cb{width:16px;height:16px;border:1.5px solid var(--bd2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s;background:var(--sur)}
+.sx-item.checked .sx-cb{background:var(--blu);border-color:var(--blu)}
+.sx-chk{width:10px;height:10px;display:none}
+.sx-item.checked .sx-chk{display:block}
+.sx-label{line-height:1.3;flex:1}
+.sx-badge{font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:2px;flex-shrink:0}
+.sx-badge-crit{background:var(--rbg);color:var(--red);border:1px solid var(--rbd)}
+.sx-badge-imp{background:var(--obg);color:var(--org);border:1px solid var(--obd)}
+.sel-count{font-size:11px;color:var(--tx3);text-align:center;margin-top:6px;font-family:var(--mono)}
+.clear-btn{width:100%;padding:6px;border:1px solid var(--bd2);border-radius:4px;background:none;color:var(--tx3);font-family:var(--mono);font-size:10px;letter-spacing:.08em;cursor:pointer;text-transform:uppercase;transition:all .15s;margin-top:7px}
+.clear-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ── バッジ共通 ── */
+.lv{display:inline-block;padding:2px 8px;border-radius:3px;font-family:var(--mono);font-size:10px;font-weight:600;white-space:nowrap}
+.lv-fatal{background:var(--rbg);color:var(--red);border:1px solid var(--rbd)}
+.lv-toxic{background:var(--obg);color:var(--org);border:1px solid var(--obd)}
+.lv-watch{background:var(--bbg);color:var(--blu);border:1px solid var(--bbd)}
+.lv-safe{background:var(--gbg);color:var(--grn);border:1px solid var(--gbd)}
+
+/* ── メイン ── */
+.results-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.results-hd h2{font-size:13px;font-weight:500;color:var(--tx2)}
+.sort-sel{border:1px solid var(--bd2);border-radius:4px;padding:4px 8px;font-size:11px;font-family:var(--mono);background:var(--sur);color:var(--tx2);outline:none;cursor:pointer}
+
+/* ── 緊急アラート ── */
+.emerguide{background:var(--rbg);border:1.5px solid var(--rbd);border-radius:var(--r);padding:13px;margin-bottom:14px}
+.emerguide h3{font-size:13px;font-weight:700;color:var(--red);margin-bottom:9px}
+.eg-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media(max-width:600px){.eg-grid{grid-template-columns:1fr}}
+.eg-item{background:var(--sur);border:1px solid var(--rbd);border-radius:4px;padding:7px 10px;font-size:12px}
+.eg-item strong{display:block;font-size:10px;font-family:var(--mono);color:var(--red);margin-bottom:2px;text-transform:uppercase;letter-spacing:.06em}
+
+/* ── 比較ボタン ── */
+.cmp-wrap{margin-bottom:13px;display:none;align-items:center;gap:10px;flex-wrap:wrap}
+.cmp-btn{padding:7px 16px;background:var(--pur);color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-family:var(--mono);letter-spacing:.06em;transition:opacity .15s}
+.cmp-btn:hover{opacity:.85}
+
+/* ── 候補カード ── */
+.cand-card{background:var(--sur);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.cand-top{padding:13px 15px;display:grid;grid-template-columns:1fr auto;gap:10px}
+.cand-name{font-size:15px;font-weight:700;margin-bottom:3px}
+.cand-tox-tag{font-size:11px;font-family:var(--mono);color:var(--pur);background:var(--pubg);padding:2px 7px;border-radius:3px;border:1px solid var(--pubd);display:inline-block;margin-bottom:5px}
+.match-bar-wrap{margin-bottom:6px}
+.match-bar-lbl{font-size:11px;color:var(--tx3);margin-bottom:3px;display:flex;justify-content:space-between}
+.match-bar-outer{height:6px;background:var(--sur2);border-radius:3px;overflow:hidden}
+.match-bar-inner{height:100%;border-radius:3px;transition:width .3s}
+.bar-normal{background:var(--blu)}
+.bar-boost{background:linear-gradient(90deg,var(--blu),var(--pur))}
+.boost-badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-family:var(--mono);background:var(--pubg);color:var(--pur);border:1px solid var(--pubd);margin-left:6px}
+.match-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.tag-hit{padding:2px 8px;border-radius:12px;font-size:11px;background:var(--bbg);color:var(--blu);border:1px solid var(--bbd)}
+.tag-miss{padding:2px 8px;border-radius:12px;font-size:11px;background:var(--sur2);color:var(--tx3);border:1px solid var(--bd);text-decoration:line-through}
+
+/* ── 否定所見 ── */
+.neg-block{margin:0 15px 10px;background:var(--rbg);border:1px solid var(--rbd);border-radius:4px;padding:9px 11px}
+.neg-title{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--red);margin-bottom:6px}
+.neg-tags{display:flex;flex-wrap:wrap;gap:4px}
+.neg-tag{padding:3px 8px;border-radius:12px;font-size:11px;background:var(--rbg);color:var(--red);border:1px solid var(--rbd)}
+.neg-tag.conflict{background:#2a0808;color:#ff9090;border-color:#6a1818;font-weight:700}
+.neg-warn{margin-top:6px;font-size:11px;color:var(--red)}
+
+/* ── 詳細展開 ── */
+.card-btns{display:flex;border-top:1px solid var(--bd)}
+.detail-toggle{flex:1;padding:7px;border:none;border-right:.5px solid var(--bd);background:var(--sur2);color:var(--tx2);font-size:12px;cursor:pointer;transition:background .12s;display:flex;align-items:center;justify-content:center;gap:5px}
+.detail-toggle:hover{background:var(--sur3)}
+.jump-btn{flex:1;padding:7px;border:none;background:var(--blu);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;transition:opacity .15s}
+.jump-btn:hover{opacity:.85}
+
+.cand-detail{display:none;border-top:1px solid var(--bd);padding:13px 15px}
+.cand-detail.open{display:block}
+.ds{background:var(--sur2);border-radius:4px;padding:9px 11px;margin-bottom:9px}
+.ds-title{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--tx3);margin-bottom:6px}
+.ds-body{font-size:12.5px;line-height:1.75}
+.ds-body ul{padding-left:16px}
+.ds-body li{margin-bottom:2px}
+.hi{color:var(--red);font-weight:700}
+.action-steps{counter-reset:step;list-style:none;padding:0}
+.action-steps li{counter-increment:step;display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12.5px;line-height:1.6}
+.action-steps li:last-child{border:none}
+.action-steps li::before{content:counter(step);font-family:var(--mono);font-size:10px;background:var(--tx);color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.ref-block{padding:9px 11px;background:var(--bbg);border:1px solid var(--bbd);border-radius:4px;font-size:11px;color:var(--blu);margin-top:2px}
+.ref-title{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+
+/* ── 比較モーダル ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--sur);border-radius:var(--r);max-width:820px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-hd{padding:13px 20px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--sur);z-index:10}
+.modal-hd h3{font-size:14px;font-weight:700}
+.modal-close{background:none;border:1px solid var(--bd2);border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--tx2);transition:all .15s}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-body{padding:18px}
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.cmp-tbl th{padding:7px 11px;background:var(--sur2);font-weight:600;text-align:center;border:1px solid var(--bd)}
+.cmp-tbl th.row-hd{text-align:left;background:var(--sur3);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3)}
+.cmp-tbl td{padding:7px 11px;border:1px solid var(--bd);vertical-align:middle;text-align:center}
+.cmp-tbl tr:nth-child(even) td{background:var(--sur2)}
+.decisive{background:#fffbeb!important;border-left:3px solid var(--org)!important}
+
+.no-results{text-align:center;padding:60px 20px;color:var(--tx3)}
+.no-results svg{width:40px;height:40px;opacity:.2;margin-bottom:12px}
+.no-results p{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+footer{border-top:1px solid var(--bd);padding:16px 24px;text-align:center;font-size:11px;color:var(--tx3);line-height:1.7;margin-top:40px}
+</style>
+</head>
+<body>
+
+<header class="hd">
+  <span class="hd-logo">neko<em>To</em>Fukuro</span>
+  <h1>症状逆引き</h1>
+  <span class="hd-spacer"></span>
+  <a class="nav-link" href="search.html">物質検索</a>
+  <a class="nav-link active" href="reverse.html">症状逆引き</a>
+</header>
+
+<!-- AG/OG 計算バー -->
+<div class="calc-bar">
+  <div class="calc-bar-inner">
+    <div class="calc-bar-title">
+      <span>検査値</span>
+      AG・OG を計算してスコアに自動反映
+    </div>
+    <div class="calc-fields">
+      <div class="cf-g"><label>Na</label><input type="number" id="c_na"  placeholder="140" step="1"></div>
+      <div class="cf-g"><label>Cl</label><input type="number" id="c_cl"  placeholder="102" step="1"></div>
+      <div class="cf-g"><label>HCO3</label><input type="number" id="c_hco3" placeholder="24" step="1"></div>
+      <div class="cf-g"><label>Alb (g/dL)</label><input type="number" id="c_alb" placeholder="4.0" step="0.1"></div>
+      <div class="cf-g" style="border-left:1px solid var(--bbd);padding-left:10px"><label>OSM測定値</label><input type="number" id="c_osm" placeholder="290" step="1"></div>
+      <div class="cf-g"><label>BUN</label><input type="number" id="c_bun" placeholder="15" step="1"></div>
+      <div class="cf-g"><label>Glucose</label><input type="number" id="c_glu" placeholder="100" step="1"></div>
+      <div class="cf-g"><label>Ethanol</label><input type="number" id="c_eth" placeholder="0" step="1"></div>
+      <button class="calc-go" onclick="calcLab()">計算 / スコア反映</button>
+    </div>
+    <div class="calc-chips" id="calc-chips"></div>
+    <div class="calc-hint" id="calc-hint"></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- サイドバー -->
+<aside class="sidebar">
+  <div class="side-card">
+    <div class="side-hd">症状・所見を選択</div>
+    <div class="side-body" id="sx-body"></div>
+  </div>
+  <div class="side-card">
+    <div class="side-hd">中毒110番</div>
+    <div class="side-body" style="font-size:12px;line-height:1.9">
+      <div><strong>大阪</strong>　<span style="font-family:var(--mono)">072-727-2499</span><br><span style="color:var(--tx3);font-size:11px">24時間・年中無休</span></div>
+      <div style="margin-top:8px"><strong>つくば</strong>　<span style="font-family:var(--mono)">029-852-9999</span><br><span style="color:var(--tx3);font-size:11px">9〜21時（土日祝含む）</span></div>
+      <div style="margin-top:8px"><strong>国立感染研</strong>　<span style="font-family:var(--mono)">03-5285-1111</span><br><span style="color:var(--tx3);font-size:11px">ボツリヌス等の抗毒素</span></div>
+    </div>
+  </div>
+</aside>
+
+<!-- メイン -->
+<main>
+  <div class="emerguide" id="emerguide" style="display:none">
+    <h3>⚠ 選択された症状に基づく緊急対応</h3>
+    <div class="eg-grid" id="eg-body"></div>
+  </div>
+
+  <div class="cmp-wrap" id="cmp-wrap">
+    <button class="cmp-btn" onclick="openCompare()">🔍 上位2候補を比較する</button>
+    <span style="font-size:11px;color:var(--tx3)" id="cmp-label"></span>
+  </div>
+
+  <div class="results-hd">
+    <h2 id="results-label">症状を選択してください</h2>
+    <select class="sort-sel" id="sort-sel" onchange="render()">
+      <option value="score">一致度順</option>
+      <option value="severity">重症度順</option>
+    </select>
+  </div>
+
+  <div id="card-area">
+    <div class="no-results">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M9 12h6M9 16h6M9 8h6M5 20h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/>
+      </svg>
+      <p>左のチェックリストで症状を選択してください</p>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- 比較モーダル -->
+<div class="modal-ov" id="modal-ov" style="display:none" onclick="closeCompare(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hd">
+      <h3 id="modal-title">鑑別比較</h3>
+      <button class="modal-close" onclick="closeCompare()">✕ 閉じる</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<footer>
+  <strong>nekoToFukuro 中毒診療リファレンス</strong> — 症状逆引き<br>
+  本ツールは臨床判断の補助です。スコアは参考値。最終診断は担当医が行ってください。<br>
+  © nekoToFukuro team — GitHub Pages · APIキー不使用 · 完全静的
+</footer>
+
+<script src="data.js"></script>
+<script>
+// ── AG/OG 計算 + スコアブースト ──
+let agBoost = {}, ogBoost = {};
+
+function calcLab() {
+  const na=parseFloat(document.getElementById('c_na').value)||null;
+  const cl=parseFloat(document.getElementById('c_cl').value)||null;
+  const hco3=parseFloat(document.getElementById('c_hco3').value)||null;
+  const alb=parseFloat(document.getElementById('c_alb').value)||null;
+  const osm=parseFloat(document.getElementById('c_osm').value)||null;
+  const bun=parseFloat(document.getElementById('c_bun').value)||null;
+  const glu=parseFloat(document.getElementById('c_glu').value)||null;
+  const eth=parseFloat(document.getElementById('c_eth').value)||0;
+  const chipsEl=document.getElementById('calc-chips');
+  const hintEl=document.getElementById('calc-hint');
+  agBoost={}; ogBoost=[];
+  const chips=[], hints=[];
+
+  if (na!==null && cl!==null && hco3!==null) {
+    let ag=na-cl-hco3;
+    let agCorr=alb!==null ? ag+2.5*(4.0-alb) : ag;
+    const agHigh=agCorr>16;
+    chips.push(`<div class="chip ${agHigh?'alert':'ok'}">
+      <span class="chip-label">補正AG</span>
+      <span class="chip-val">${agCorr.toFixed(1)} mEq/L</span>
+      ${agHigh?'<span style="font-size:10px">↑</span>':''}
+    </div>`);
+    if (agHigh) {
+      hints.push('AG上昇 → メタノール/EG・サリチル酸・乳酸アシドーシスを疑う');
+      agBoost['methanol_tox']=6; agBoost['salicylate_tox']=5; agBoost['sympathomimetic']=3;
+      if (!checked.has('s_acidosis')) toggleSx('s_acidosis');
+    }
+    if (na!==null && hco3!==null) {
+      const dd=(agCorr-12)/(24-hco3);
+      if (isFinite(dd)) {
+        const lbl=dd<1?'混合性アシドーシス':dd>2?'代謝性アルカローシス合併':'単純AG上昇';
+        chips.push(`<div class="chip ok"><span class="chip-label">Δ-Δ</span><span class="chip-val">${dd.toFixed(2)}</span><span style="font-size:10px;color:var(--tx2)">${lbl}</span></div>`);
+      }
+    }
+  }
+
+  if (osm!==null && na!==null && bun!==null && glu!==null) {
+    const calc=2*na+bun/2.8+glu/18+eth/4.6;
+    const og=osm-calc;
+    const ogHigh=og>10;
+    chips.push(`<div class="chip ${ogHigh?'alert':'ok'}">
+      <span class="chip-label">OG</span>
+      <span class="chip-val">${og.toFixed(1)} mOsm/kg</span>
+      ${ogHigh?'<span style="font-size:10px">↑</span>':''}
+    </div>`);
+    chips.push(`<div class="chip ok"><span class="chip-label">計算浸透圧</span><span class="chip-val">${calc.toFixed(0)} mOsm/kg</span></div>`);
+    if (ogHigh) {
+      hints.push(`OG増大（${og.toFixed(1)}>10）→ 毒性アルコール（メタノール・EG等）を強く示唆`);
+      ogBoost['methanol_tox']=8;
+      if (!checked.has('s_osmgap')) toggleSx('s_osmgap');
+    }
+  }
+
+  if (!chips.length) { chipsEl.style.display='none'; hintEl.textContent=''; return; }
+  chipsEl.innerHTML=chips.join('');
+  chipsEl.style.display='flex';
+  hintEl.innerHTML=hints.map(h=>`→ ${h}`).join('<br>');
+  render();
+}
+
+// ── 症状チェックリスト ──
+const checked = new Set();
+
+function buildSxList() {
+  document.getElementById('sx-body').innerHTML =
+    SYMPTOM_GROUPS.map(g=>`
+      <div class="sx-group">
+        <div class="sg-title">${g.title}</div>
+        ${g.items.map(item=>`
+          <div class="sx-item" id="sx-${item.id}" onclick="toggleSx('${item.id}')">
+            <div class="sx-cb">
+              <svg class="sx-chk" viewBox="0 0 10 10" fill="none">
+                <path d="M1.5 5L4 7.5L8.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="sx-label">${item.label}</span>
+            ${item.badge==='crit'?'<span class="sx-badge sx-badge-crit">重要</span>':item.badge==='imp'?'<span class="sx-badge sx-badge-imp">注目</span>':''}
+          </div>`).join('')}
+      </div>`).join('') +
+    `<div class="sel-count" id="sel-count">0 件選択中</div>
+     <button class="clear-btn" onclick="clearAll()">✕ すべてクリア</button>`;
+}
+
+function toggleSx(id) {
+  if (checked.has(id)) checked.delete(id); else checked.add(id);
+  document.getElementById('sx-'+id)?.classList.toggle('checked', checked.has(id));
+  document.getElementById('sel-count').textContent = checked.size+' 件選択中';
+  render();
+}
+
+function clearAll() {
+  [...checked].forEach(id=>{ checked.delete(id); document.getElementById('sx-'+id)?.classList.remove('checked'); });
+  agBoost={}; ogBoost={};
+  document.getElementById('calc-chips').style.display='none';
+  document.getElementById('calc-hint').textContent='';
+  document.getElementById('sel-count').textContent='0 件選択中';
+  render();
+}
+
+function getSxLabel(id) {
+  for (const g of SYMPTOM_GROUPS) {
+    const f=g.items.find(i=>i.id===id); if (f) return f.label;
+  }
+  return id;
+}
+
+// ── スコア計算 ──
+function calcScore(entry) {
+  if (!checked.size) return {score:0, hits:[], misses:[], boosted:false};
+  let score=0; const hits=[], misses=[];
+  checked.forEach(sid=>{
+    const w=entry.symptoms[sid]||0;
+    if (w>0){score+=w; hits.push(sid);} else misses.push(sid);
+  });
+  const boost=(agBoost[entry.id]||0)+(ogBoost[entry.id]||0);
+  return {score:score+boost, hits, misses, boosted:boost>0};
+}
+
+// ── 緊急アラート ──
+function updateEmerguide() {
+  const triggered=ALERTS.filter(a=>a.sxIds.every(id=>checked.has(id)));
+  const el=document.getElementById('emerguide');
+  if (!triggered.length){el.style.display='none'; return;}
+  el.style.display='block';
+  document.getElementById('eg-body').innerHTML=triggered.map(a=>
+    `<div class="eg-item"><strong>${a.cls==='crit'?'⚠ 緊急':'注意'}</strong>${a.text}</div>`
+  ).join('');
+}
+
+// ── レンダリング ──
+const SEV_MAP={5:'lv-fatal',4:'lv-toxic',3:'lv-watch',2:'lv-watch',1:'lv-safe'};
+const SEV_LABEL={5:'最重症',4:'重症',3:'中等症',2:'軽〜中',1:'軽症'};
+const REF_TYPE={manual:'院内マニュアル',guideline:'ガイドライン',paper:'論文',textbook:'教科書'};
+const expandedSet=new Set();
+let topTwo=[];
+
+function toggleDetail(id,e) {
+  e.stopPropagation();
+  if(expandedSet.has(id)) expandedSet.delete(id); else expandedSet.add(id);
+  render();
+}
+
+function render() {
+  updateEmerguide();
+  const area=document.getElementById('card-area');
+  const cmpWrap=document.getElementById('cmp-wrap');
+  const sort=document.getElementById('sort-sel').value;
+
+  if (!checked.size) {
+    document.getElementById('results-label').innerHTML='症状を選択してください';
+    cmpWrap.style.display='none';
+    area.innerHTML=`<div class="no-results">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M9 12h6M9 16h6M9 8h6M5 20h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/>
+      </svg>
+      <p>左のチェックリストで症状を選択してください</p></div>`;
+    return;
+  }
+
+  let scored=TOXIDROME_MAP.map(e=>({entry:e,...calcScore(e)})).filter(s=>s.score>0);
+  if(sort==='score') scored.sort((a,b)=>b.score-a.score||b.entry.severity-a.entry.severity);
+  else scored.sort((a,b)=>b.entry.severity-a.entry.severity||b.score-a.score);
+  topTwo=scored.slice(0,2).map(s=>s.entry);
+
+  document.getElementById('results-label').innerHTML=
+    `一致候補 <strong>${scored.length}</strong> 件（${checked.size} 症状選択中）`;
+
+  if(topTwo.length>=2){
+    cmpWrap.style.display='flex';
+    document.getElementById('cmp-label').textContent=`比較: ${topTwo[0].name} vs ${topTwo[1].name}`;
+  } else cmpWrap.style.display='none';
+
+  if(!scored.length){
+    area.innerHTML=`<div class="no-results"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>一致する候補が見つかりません</p></div>`;
+    return;
+  }
+
+  const maxScore=scored[0].score;
+  area.innerHTML=scored.map(({entry,score,hits,misses,boosted})=>{
+    const barPct=maxScore>0?Math.round(score/maxScore*100):0;
+    const sevClass=SEV_MAP[entry.severity]||'lv-uk';
+    const sevLabel=SEV_LABEL[entry.severity]||'?';
+    const isExp=expandedSet.has(entry.id);
+
+    // 特異的所見
+    const pathoHtml=entry.pathognomonic?.length
+      ?`<div style="font-size:11px;color:var(--tx3);margin-top:4px">特異的所見: ${entry.pathognomonic.map(id=>{
+          const hit=hits.includes(id);
+          return `<span style="padding:1px 6px;border-radius:2px;font-size:10px;
+            background:${hit?'var(--bbg)':'var(--sur2)'};color:${hit?'var(--blu)':'var(--tx3)'};
+            border:1px solid ${hit?'var(--bbd)':'var(--bd)'}">
+            ${hit?'✓ ':''}${getSxLabel(id)}</span>`;
+        }).join(' ')}</div>`:''
+
+    // 否定所見
+    const nfConflicts=(entry.negativeFindings||[]).filter(nf=>checked.has(nf.id));
+    const nfNormal=(entry.negativeFindings||[]).filter(nf=>!checked.has(nf.id));
+    const negHtml=`<div class="neg-block">
+      <div class="neg-title">通常認められない所見（否定的）</div>
+      <div class="neg-tags">
+        ${nfConflicts.map(nf=>`<span class="neg-tag conflict" title="${nf.reason}">⚠ ${nf.label}（矛盾）</span>`).join('')}
+        ${nfNormal.map(nf=>`<span class="neg-tag" title="${nf.reason}">✗ ${nf.label}</span>`).join('')}
+      </div>
+      ${nfConflicts.length?`<div class="neg-warn">⚠ 選択中の <strong>${nfConflicts.map(n=>n.label).join('・')}</strong> はこの中毒では通常みられません。別の中毒を検討してください。</div>`:''}
+    </div>`;
+
+    const contraHtml=(entry.contraindications||[]).length
+      ?`<div class="ds" style="background:var(--rbg);border:1px solid var(--rbd)">
+          <div class="ds-title" style="color:var(--red)">禁忌・禁止事項</div>
+          <div class="ds-body"><ul>${entry.contraindications.map(c=>`<li class="hi">${c}</li>`).join('')}</ul></div>
+        </div>`:''
+
+    const refsHtml=(entry.refs||[]).map(r=>
+      `<div style="margin-bottom:2px"><span style="padding:1px 5px;border-radius:2px;font-size:10px;font-family:var(--mono);background:var(--bbg);color:var(--blu);border:1px solid var(--bbd);margin-right:4px">${REF_TYPE[r.type]||r.type}</span>${r.label}</div>`
+    ).join('');
+
+    // DB側のエントリと照合してsearch.htmlのcardにジャンプできるか確認
+    const dbEntry=DB.find(d=>
+      d.name===entry.name ||
+      (d.aliases||[]).some(a=>a===entry.name) ||
+      // toxidrome_mapのtox（原因物質）とDB名が一致するものを探す
+      d.name.includes(entry.tox.split('・')[0]) ||
+      entry.tox.includes(d.name)
+    );
+    // IDマッピング（TOXIDROME_MAPのid → DB id）
+    const ID_MAP = {
+      // TOXIDROME_MAP id → DB id
+      'cholinergic':'organophosphate', 'anticholinergic':'dph',
+      'sympathomimetic':'caf', 'opioid_tox':'opioid', 'sedative_tox':'bzp',
+      'tca_tox':'tca', 'serotonin_tox':'ssri', 'paraquat_tox':'paraquat',
+      'glufosinate_tox':'glufosinate', 'amatoxin_tox':'amatoxin',
+      'ttx_tox':'ttx', 'co_tox':'co', 'methanol_tox':'methanol',
+      'apap_tox':'apap', 'salicylate_tox':'asa', 'botulism_tox':'botulism',
+      'ehec_tox':'ehec', 'thallium_tox':'thallium',
+    }
