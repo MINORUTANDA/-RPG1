@@ -1,0 +1,2316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPA 診療支援 — 猫と梟チーム</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f6fa; --surface:#fff; --surface2:#f8f9fc; --surface3:#eef1f8;
+  --border:#dde2ee; --border2:#c8cfe4;
+  --text:#1a2040; --text-dim:#4a5578; --text-muted:#8890aa;
+  --accent:#2563eb; --accent2:#1d4ed8; --accent-bg:#eff6ff;
+  --red:#dc2626; --red-bg:#fef2f2; --red-border:#fecaca;
+  --amber:#d97706; --amber-bg:#fffbeb; --amber-border:#fde68a;
+  --green:#16a34a; --green-bg:#f0fdf4; --green-border:#bbf7d0;
+  --cyan:#0891b2; --cyan-bg:#ecfeff;
+  --purple:#7c3aed; --purple-bg:#faf5ff;
+  --pink:#be185d; --pink-bg:#fdf2f8;
+  --mono:'IBM Plex Mono',monospace;
+  --serif:'DM Serif Display',serif;
+  --sans:'Noto Sans JP',sans-serif;
+  --shadow:0 1px 4px rgba(30,50,100,.08),0 4px 16px rgba(30,50,100,.06);
+  --shadow-sm:0 1px 3px rgba(30,50,100,.07);
+  --hh:62px; --th:110px;
+  --sw:212px;
+  --fixed-top: calc(var(--hh) + var(--th));
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);font-size:14px;line-height:1.65;
+  padding-top:var(--fixed-top);
+  padding-left:var(--sw);
+}
+
+/* HEADER — fixed */
+.app-header{
+  position:fixed;top:0;left:0;right:0;z-index:300;
+  height:var(--hh);
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 22px;display:flex;align-items:center;gap:13px;
+  box-shadow:0 2px 8px rgba(30,50,100,.07);
+  overflow:hidden;
+  contain:layout style;
+}
+.hicon{width:38px;height:38px;background:linear-gradient(135deg,#dc2626,#b91c1c);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(220,38,38,.3);}
+.htitle{font-family:var(--serif);font-size:20px;color:var(--text);}
+.hsub{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em;margin-top:1px;}
+.hbadge{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--accent);
+  background:var(--accent-bg);border:1px solid #bfdbfe;padding:4px 10px;border-radius:20px;
+  letter-spacing:.07em;flex-shrink:0;}
+
+/* TIMER BAR — fixed just below header */
+.timer-bar{
+  position:fixed;top:var(--hh);left:0;right:0;z-index:290;
+  height:var(--th);
+  background:var(--surface);border-bottom:2px solid var(--border);
+  display:flex;flex-direction:column;justify-content:center;
+  box-shadow:0 2px 8px rgba(30,50,100,.06);
+  overflow:hidden;
+  contain:layout style;
+}
+.timer-row1{display:flex;align-items:center;gap:10px;padding:6px 16px 4px;min-width:0;overflow:hidden;}
+.timer-row2{display:flex;align-items:center;gap:10px;padding:4px 16px 6px;min-width:0;border-top:1px solid var(--border);overflow:hidden;}
+.tpill{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 12px;}
+.tlabel{font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:.09em;white-space:nowrap;}
+.tdisp{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--red);letter-spacing:.04em;min-width:68px;transition:color .3s;}
+.tdisp.running{animation:blink 1.4s ease-in-out infinite;}
+.tdisp.warn{color:var(--amber);}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.65;}}
+.tbtns{display:flex;gap:5px;}
+.tbtn{padding:6px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer;
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.04em;transition:all .15s;white-space:nowrap;}
+.tbtn-start{background:var(--red);color:#fff;border-color:var(--red);}
+.tbtn-start:hover{background:#b91c1c;}
+.tbtn-start:disabled{opacity:.55;cursor:default;}
+.tbtn-pause{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border);}
+.tbtn-pause:hover{background:var(--amber-border);}
+.tbtn-reset{background:var(--surface2);color:var(--text-dim);}
+.tbtn-reset:hover{background:var(--surface3);}
+
+/* OFFSET INPUT */
+.oinput{width:50px;padding:4px 6px;background:#fff;border:1px solid var(--amber-border);
+  border-radius:5px;font-family:var(--mono);font-size:14px;font-weight:600;color:var(--amber);text-align:center;}
+.oinput:focus{outline:none;border-color:var(--amber);}
+.ounit{font-family:var(--mono);font-size:11px;color:var(--amber);}
+.oapply{padding:5px 10px;border-radius:6px;background:var(--amber);color:#fff;border:none;
+  font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.oapply:hover{background:#b45309;}
+
+/* EPI ROW (mobile only - hidden on desktop) */
+
+/* SIDEBAR — fixed */
+.sidebar{
+  position:fixed;top:var(--fixed-top);left:0;bottom:0;z-index:200;
+  width:var(--sw);
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:10px 0;overflow-y:auto;overflow-x:hidden;
+  box-shadow:2px 0 6px rgba(30,50,100,.06);
+  contain:layout style;
+}
+
+/* APP BODY — just a wrapper */
+.app-body{display:block;}
+
+/* MAIN CONTENT — normal flow, scrolls with page */
+.main-content{
+  padding:28px 32px 80px;
+  background:var(--bg);
+  min-height:100vh;
+}
+
+.sdsec{padding:7px 15px 2px;font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:.15em;text-transform:uppercase;margin-top:6px;}
+.nitem{display:flex;align-items:center;gap:9px;padding:9px 15px;cursor:pointer;border-left:3px solid transparent;transition:all .12s;color:var(--text-dim);font-size:13px;}
+.nitem:hover{background:var(--surface2);color:var(--text);}
+.nitem.active{background:var(--accent-bg);border-left-color:var(--accent);color:var(--accent2);font-weight:700;}
+.ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* MAIN CONTENT */
+.page{display:none;} .page.active{display:block;}
+.page-header{margin-bottom:18px;padding-bottom:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;overflow:hidden;min-width:0;}
+.picon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.ptitle{font-family:var(--serif);font-size:20px;color:var(--text);overflow-wrap:break-word;word-break:keep-all;}
+.psub{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.05em;margin-top:1px;overflow-wrap:break-word;word-break:break-all;min-width:0;}
+
+/* GRIDS */
+.g2{display:grid;gap:13px;grid-template-columns:1fr 1fr;max-width:100%;}
+.g3{display:grid;gap:13px;grid-template-columns:1fr 1fr 1fr;max-width:100%;}
+.ga{display:grid;gap:13px;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:17px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);overflow-wrap:break-word;word-break:keep-all;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.card.red::before{background:linear-gradient(90deg,#dc2626,#f87171);}
+.card.amber::before{background:linear-gradient(90deg,#d97706,#fbbf24);}
+.card.green::before{background:linear-gradient(90deg,#16a34a,#4ade80);}
+.card.blue::before{background:linear-gradient(90deg,#2563eb,#60a5fa);}
+.card.cyan::before{background:linear-gradient(90deg,#0891b2,#22d3ee);}
+.card.purple::before{background:linear-gradient(90deg,#7c3aed,#a78bfa);}
+.card.pink::before{background:linear-gradient(90deg,#be185d,#f472b6);}
+.card.gray::before{background:linear-gradient(90deg,#6b7280,#9ca3af);}
+.ctitle{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:6px;}
+
+/* ALERTS */
+.alert{padding:11px 13px;border-radius:8px;border-left:4px solid;margin-bottom:11px;font-size:13px;line-height:1.7;}
+.alert.danger{background:var(--red-bg);border-color:var(--red);color:#7f1d1d;}
+.alert.warning{background:var(--amber-bg);border-color:var(--amber);color:#78350f;}
+.alert.info{background:var(--accent-bg);border-color:var(--accent);color:#1e3a8a;}
+.alert.success{background:var(--green-bg);border-color:var(--green);color:#14532d;}
+.atitle{font-family:var(--mono);font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+
+/* STEPS */
+.slist{display:flex;flex-direction:column;gap:7px;}
+.step{display:flex;gap:11px;align-items:flex-start;padding:11px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);transition:all .15s;}
+.step:hover{border-color:var(--accent);background:var(--accent-bg);}
+.snum{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--mono);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.snum.red{background:var(--red);}
+.snum.amber{background:var(--amber);}
+.snum.green{background:var(--green);}
+.snum.cyan{background:var(--cyan);}
+.scont{flex:1;}
+.stitle{font-weight:700;color:var(--text);margin-bottom:2px;font-size:13px;overflow-wrap:break-word;word-break:keep-all;}
+.sdesc{color:var(--text-dim);font-size:12px;line-height:1.6;overflow-wrap:break-word;word-break:keep-all;}
+
+/* TABLE */
+.dt{width:100%;border-collapse:collapse;font-size:13px;}
+.dt th{padding:7px 9px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid var(--border);background:var(--surface2);}
+.dt td{padding:9px 9px;border-bottom:1px solid var(--border);color:var(--text-dim);vertical-align:top;}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:var(--surface2);}
+.dn{color:var(--accent2);font-weight:700;font-family:var(--mono);}
+.dd{color:var(--amber);font-weight:700;font-family:var(--mono);}
+
+/* TAGS */
+.tag{display:inline-block;padding:2px 7px;border-radius:20px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.03em;margin:2px;}
+.tag.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+.tag.green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.tag.amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);}
+.tag.blue{background:var(--accent-bg);color:var(--accent2);border:1px solid #bfdbfe;}
+.tag.purple{background:var(--purple-bg);color:var(--purple);border:1px solid #ddd6fe;}
+.tag.cyan{background:var(--cyan-bg);color:var(--cyan);border:1px solid #a5f3fc;}
+.tag.gray{background:var(--surface3);color:var(--text-muted);border:1px solid var(--border);}
+
+/* CHECKLIST */
+.cklist{display:flex;flex-direction:column;gap:3px;}
+.ckitem{display:flex;align-items:flex-start;gap:9px;cursor:pointer;padding:7px 9px;border-radius:7px;transition:background .12s;user-select:none;border:1px solid transparent;}
+.ckitem:hover{background:var(--surface2);border-color:var(--border);}
+.ckbox{width:17px;height:17px;border:2px solid var(--border2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:2px;background:var(--surface);}
+.ckitem.chk .ckbox{background:var(--green);border-color:var(--green);}
+.ckitem.chk .ckbox::after{content:'✓';color:#fff;font-size:10px;font-weight:800;}
+.ckitem.chk .cktxt{color:var(--text-muted);text-decoration:line-through;}
+.cktxt{color:var(--text-dim);font-size:13px;line-height:1.5;}
+
+/* RHYTHM BUTTONS */
+.rhsel{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px;}
+.rhbtn{padding:10px 20px;border-radius:9px;border:2px solid var(--border);background:var(--surface);color:var(--text-dim);cursor:pointer;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.04em;transition:all .18s;text-align:center;box-shadow:var(--shadow-sm);}
+.rhbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.rhbtn.svf{border-color:var(--red);background:var(--red-bg);color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,.1);}
+.rhbtn.spea{border-color:var(--amber);background:var(--amber-bg);color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.1);}
+.rhbtn.sasy{border-color:#6b7280;background:var(--surface3);color:#4b5563;}
+
+/* FLOW */
+.flow{display:flex;flex-direction:column;gap:3px;}
+.fbox{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);text-align:center;transition:all .15s;line-height:1.5;overflow-wrap:break-word;word-break:keep-all;}
+.fbox:hover{border-color:var(--accent);}
+.fbox.fred{border-color:var(--red);background:var(--red-bg);color:var(--red);}
+.fbox.fgreen{border-color:var(--green);background:var(--green-bg);color:var(--green);}
+.fbox.famber{border-color:var(--amber);background:var(--amber-bg);color:#92400e;}
+.fbox.fblue{border-color:var(--accent);background:var(--accent-bg);color:var(--accent2);}
+.farr{text-align:center;font-size:15px;color:var(--text-muted);line-height:1.2;}
+.fbranch{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+
+/* TABS */
+.tabs{display:flex;gap:3px;background:var(--surface3);padding:4px;border-radius:10px;margin-bottom:16px;}
+.tabbtn{flex:1;padding:7px 9px;border:none;border-radius:7px;background:transparent;color:var(--text-dim);cursor:pointer;font-family:var(--sans);font-size:12px;transition:all .15s;}
+.tabbtn.active{background:var(--surface);color:var(--text);font-weight:700;box-shadow:var(--shadow-sm);}
+.tabcnt{display:none;} .tabcnt.active{display:block;}
+
+/* VITALS */
+.vitals{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px;}
+.vbox{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;text-align:center;box-shadow:var(--shadow-sm);}
+.vlabel{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.08em;margin-bottom:3px;}
+.vval{font-family:var(--mono);font-size:21px;font-weight:700;}
+.vval.ok{color:var(--green);} .vval.warn{color:var(--amber);} .vval.bad{color:var(--red);}
+.vunit{font-size:10px;color:var(--text-muted);}
+
+/* PROG */
+.pitem{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.plabel{font-size:12px;color:var(--text-dim);width:195px;max-width:45vw;flex-shrink:0;}
+.pbarw{flex:1;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;}
+.pbar{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.ppct{font-family:var(--mono);font-size:11px;color:var(--text-muted);width:44px;text-align:right;flex-shrink:0;}
+
+/* MISC */
+.sh{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.15em;text-transform:uppercase;margin:16px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.evbadge{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:var(--purple-bg);color:var(--purple);border:1px solid #ddd6fe;margin-left:5px;}
+.gap{display:flex;gap:5px;flex-wrap:wrap;}
+.mt{margin-top:13px;} .mb{margin-bottom:13px;}
+.inrow{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.inlbl{font-size:13px;color:var(--text-dim);width:110px;max-width:40vw;flex-shrink:0;}
+.infield{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:14px;width:95px;transition:border-color .15s;}
+.infield:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.inunit{font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--surface2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+/* REFERENCES */
+.ref-block{margin-top:20px;border-top:2px solid var(--border);padding-top:14px;}
+.ref-title{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;overflow-wrap:break-word;}
+.ref-list{display:flex;flex-direction:column;gap:0;}
+.ref-item{display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--text-dim);line-height:1.6;padding:5px 0;border-bottom:1px solid var(--border);}
+.ref-item>span{flex:1;min-width:0;overflow-wrap:break-word;word-break:keep-all;}
+.ref-item:last-child{border-bottom:none;}
+.rbadge{flex-shrink:0;width:88px;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.02em;white-space:normal;word-break:break-all;background:var(--accent-bg);color:var(--accent2);border:1px solid #bfdbfe;box-sizing:border-box;}
+.rbadge.red{background:var(--red-bg);color:var(--red);border-color:var(--red-border);}
+.rbadge.green{background:var(--green-bg);color:var(--green);border-color:var(--green-border);}
+.rbadge.amber{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border);}
+.rbadge.purple{background:var(--purple-bg);color:var(--purple);border-color:#ddd6fe;}
+.rbadge.gray{background:var(--surface3);color:var(--text-muted);border-color:var(--border);}
+.cor{display:inline;font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--purple-bg);color:var(--purple);border:1px solid #ddd6fe;margin-left:4px;vertical-align:middle;}
+
+  :root{
+    --hh:48px;
+    --th:126px;
+    --sw:0px;
+    --fixed-top:calc(var(--hh) + var(--th));
+  }
+
+  body{ padding-left:0; font-size:13px; }
+
+  /* HEADER */
+  .app-header{ padding:0 12px; gap:10px; height:var(--hh); }
+  .htitle{ font-size:16px; }
+  .hsub,.hbadge{ display:none; }
+  .menu-btn{
+    display:flex !important; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:8px;
+    border:1px solid var(--border); background:var(--surface2);
+    cursor:pointer; font-size:20px; flex-shrink:0; margin-left:auto;
+  }
+
+  /* TIMER BAR: 3行構成 */
+  .timer-bar{
+    height:var(--th);
+    display:flex; flex-direction:column; justify-content:space-evenly;
+    padding:2px 0;
+  }
+
+  /* 行1: タイマー + 開始/停止/リセット */
+  .timer-row1{
+    display:flex; align-items:center; gap:7px;
+    padding:0 10px;
+  }
+  .tpill{ padding:4px 8px; gap:5px; border-radius:7px; flex-shrink:0; }
+  .tlabel{ font-size:8px; white-space:nowrap; }
+  .tdisp{ font-size:20px; min-width:60px; }
+  .tbtns{ display:flex; gap:4px; flex-shrink:0; }
+  .tbtn{ padding:5px 8px; font-size:10px; }
+
+  /* 行3: 院外CPA設定 */
+  .timer-row2{
+    padding:0 10px; gap:6px;
+    border-top:1px solid var(--border);
+  }
+  .oinput{ width:44px; font-size:13px; padding:3px 5px; }
+  .ounit{ font-size:10px; }
+  .oapply{ padding:4px 9px; font-size:10px; }
+
+  /* SIDEBAR DRAWER */
+  .sidebar{
+    top:0 !important; left:-100% !important;
+    width:85vw !important; max-width:320px !important;
+    transition:left 0.28s cubic-bezier(0.4,0,0.2,1);
+    z-index:500 !important;
+    box-shadow:4px 0 24px rgba(0,0,0,0.18) !important;
+    padding-top:calc(var(--hh) + 8px);
+  }
+  .sidebar.open{ left:0 !important; }
+  .drawer-overlay{
+    display:none; position:fixed; inset:0; z-index:490;
+    background:rgba(0,0,0,0.45);
+  }
+  .drawer-overlay.open{ display:block; }
+
+  /* MAIN */
+  .main-content{ padding:16px 14px 80px; }
+
+  /* GRIDS */
+  .g2,.g3,.ga{ grid-template-columns:1fr !important; }
+  .vitals{ grid-template-columns:repeat(2,1fr) !important; }
+  .flow-branch{ grid-template-columns:1fr !important; }
+
+  /* CARDS / TEXT */
+  .card{ padding:14px; }
+  .ptitle{ font-size:17px; }
+  .dt{ font-size:12px; }
+  .alert{ font-size:12px; padding:10px 12px; }
+  .step{ padding:10px; gap:9px; }
+  .sdesc{ font-size:12px; }
+
+  /* RHYTHM */
+  /* Flow chart on mobile */
+  .fbranch{grid-template-columns:1fr;}
+  .fbox{font-size:12px;padding:8px 10px;}
+  .farr{font-size:13px;}
+  .step{padding:8px;gap:8px;}
+  .snum{width:22px;height:22px;font-size:10px;}
+  .stitle{font-size:12px;}
+  .sdesc{font-size:11px;}
+  .rhsel{ gap:7px; }
+  .rhbtn{ padding:10px 12px; font-size:12px; flex:1; }
+
+  /* TABS */
+  .tabs{ gap:2px; }
+  .tabbtn{ font-size:11px; padding:7px 6px; }
+
+  /* NAV */
+  .nitem{ padding:13px 18px; font-size:14px; }
+  /* Drug tables - horizontal scroll on mobile */
+  .card[style*="overflow-x:auto"] table.dt{ min-width:480px; }
+  .dt th, .dt td{ white-space:normal; word-break:keep-all; }
+  .dt th:last-child, .dt td:last-child{ min-width:120px; }
+
+  .sdsec{ padding:10px 18px 3px; font-size:10px; }
+
+  /* rCAST */
+  #lbl_r1,#lbl_r2,#lbl_w1,#lbl_w2,#lbl_w3,
+  #lbl_p1,#lbl_p2,#lbl_p3,
+  #lbl_l1,#lbl_l2,#lbl_l3,
+  #lbl_g1,#lbl_g2,#lbl_g3{
+    font-size:13px; padding:10px 12px; width:100%;
+  }
+  /* References block - mobile sizing */
+  .ref-block{ margin-top:16px; padding-top:12px; }
+  .ref-title{ font-size:9px; letter-spacing:.08em; }
+  .ref-item{ font-size:11px; gap:6px; }
+  .rbadge{ font-size:8px; padding:2px 4px; width:72px; letter-spacing:0; }
+
+@media(max-width:768px){
+  :root{
+    --hh:48px;
+    --th:126px;
+    --sw:0px;
+    --fixed-top:calc(var(--hh) + var(--th));
+  }
+  body{ padding-left:0; font-size:13px; }
+  .app-header{ padding:0 12px; gap:10px; height:var(--hh); }
+  .htitle{ font-size:16px; }
+  .hsub,.hbadge{ display:none; }
+  .menu-btn{
+    display:flex !important; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:8px;
+    border:1px solid var(--border); background:var(--surface2);
+    cursor:pointer; font-size:20px; flex-shrink:0; margin-left:auto;
+  }
+  .timer-bar{ height:var(--th); display:flex; flex-direction:column; justify-content:space-evenly; padding:2px 0; }
+  .timer-row1{ display:flex; align-items:center; gap:7px; padding:0 10px; }
+  .tpill{ padding:4px 8px; gap:5px; border-radius:7px; flex-shrink:0; }
+  .tlabel{ font-size:8px; white-space:nowrap; }
+  .tdisp{ font-size:20px; min-width:60px; }
+  .tbtns{ display:flex; gap:4px; flex-shrink:0; }
+  .tbtn{ padding:5px 8px; font-size:10px; }
+  .timer-row2{ padding:0 10px; gap:6px; border-top:1px solid var(--border); }
+  .oinput{ width:44px; font-size:13px; padding:3px 5px; }
+  .ounit{ font-size:10px; }
+  .oapply{ padding:4px 9px; font-size:10px; }
+  .sidebar{
+    top:0 !important; left:-100% !important;
+    width:85vw !important; max-width:320px !important;
+    transition:left 0.28s cubic-bezier(0.4,0,0.2,1);
+    z-index:500 !important;
+    box-shadow:4px 0 24px rgba(0,0,0,0.18) !important;
+    padding-top:calc(var(--hh) + 8px);
+  }
+  .sidebar.open{ left:0 !important; }
+  .drawer-overlay{ display:none; position:fixed; inset:0; z-index:490; background:rgba(0,0,0,0.45); }
+  .drawer-overlay.open{ display:block; }
+  .main-content{ padding:16px 14px 80px; }
+  .g2,.g3,.ga{ grid-template-columns:1fr !important; }
+  .vitals{ grid-template-columns:repeat(2,1fr) !important; }
+  .flow-branch{ grid-template-columns:1fr !important; }
+  .card{ padding:14px; }
+  .ptitle{ font-size:17px; }
+  .dt{ font-size:12px; }
+  .alert{ font-size:12px; padding:10px 12px; }
+  .step{ padding:10px; gap:9px; }
+  .sdesc{ font-size:12px; }
+  .rhsel{ gap:7px; }
+  .rhbtn{ padding:10px 12px; font-size:12px; flex:1; }
+  .tabs{ gap:2px; }
+  .tabbtn{ font-size:11px; padding:7px 6px; }
+  .nitem{ padding:13px 18px; font-size:14px; }
+  .sdsec{ padding:10px 18px 3px; font-size:10px; }
+  #lbl_r1,#lbl_r2,#lbl_w1,#lbl_w2,#lbl_w3,
+  #lbl_p1,#lbl_p2,#lbl_p3,
+  #lbl_l1,#lbl_l2,#lbl_l3,
+  #lbl_g1,#lbl_g2,#lbl_g3{
+    font-size:13px; padding:10px 12px; width:100%;
+  }
+  /* Fixed-width label overrides */
+  .plabel{ width:auto !important; max-width:48vw !important; }
+  .inlbl{ width:auto !important; max-width:45vw !important; }
+  /* rCAST radio rows */
+  .inrow{ flex-wrap:wrap !important; }
+  .plrow{ flex-wrap:wrap !important; }
+  /* ROSC vitals already 2-col */
+  /* Rhythm buttons */
+  .rhbtn{ font-size:11px !important; padding:8px 10px !important; letter-spacing:0 !important; min-width:0 !important; flex:1 !important; }
+  /* g2 on braindeath - already 1col but ensure */
+  #page-braindeath .g2{ grid-template-columns:1fr !important; }
+  #page-rcast .g2{ grid-template-columns:1fr !important; }
+
+}
+</style>
+</head>
+<body>
+
+<!-- DRAWER OVERLAY (mobile only) -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="hicon">🫀</div>
+  <div>
+    <div class="htitle">CPA 診療支援</div>
+    <div class="hsub">CARDIAC ARREST CLINICAL DECISION SUPPORT · 猫と梟チーム</div>
+  </div>
+  <div class="hbadge">AHA 2025 · ERC 2025 · SSCG 2026</div>
+  <!-- ハンバーガーボタン (モバイルのみ表示) -->
+  <button class="menu-btn" id="menuBtn" onclick="toggleDrawer()" style="display:none" aria-label="メニュー">☰</button>
+</div>
+
+<!-- TIMER BAR -->
+<div class="timer-bar" id="timerBar">
+  <!-- 行1：タイマー＋ボタン＋アドレナリン -->
+  <div class="timer-row1">
+    <div class="tpill">
+      <div>
+        <div class="tlabel">CPR 経過時間</div>
+        <div class="tdisp" id="tdisp">00:00</div>
+      </div>
+      <div class="tbtns">
+        <button class="tbtn tbtn-start" id="btnStart" onclick="startTimer()">▶ 開始</button>
+        <button class="tbtn tbtn-pause" onclick="pauseTimer()">⏸ 停止</button>
+        <button class="tbtn tbtn-reset" onclick="resetTimer()">↺ リセット</button>
+      </div>
+    </div>
+  </div>
+  <!-- 行2：院外CPA オフセット -->
+  <div class="timer-row2">
+    <span style="font-size:12px;flex-shrink:0">🚑</span>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--amber);white-space:nowrap;flex-shrink:0">搬入前CPR</span>
+    <input type="number" class="oinput" id="offM" value="0" min="0" max="120" placeholder="0">
+    <span class="ounit">分</span>
+    <input type="number" class="oinput" id="offS" value="0" min="0" max="59" placeholder="0">
+    <span class="ounit">秒</span>
+    <button class="oapply" id="btnApply" onclick="applyOffset()">設定→▶</button>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="app-body">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <!-- モバイル用 閉じるボタン -->
+    <div id="sidebarCloseRow" style="display:none;padding:8px 12px 4px;border-bottom:1px solid var(--border);margin-bottom:4px;">
+      <button onclick="closeDrawer()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;">
+        ✕ メニューを閉じる
+      </button>
+    </div>
+    <div class="sdsec">急性期対応</div>
+    <div class="nitem active" onclick="showPage('acls',this)"><span class="ndot" style="background:var(--red)"></span>ACLS アルゴリズム</div>
+    <div class="nitem" onclick="showPage('drugs',this)"><span class="ndot" style="background:var(--amber)"></span>薬剤・除細動</div>
+    <div class="nitem" onclick="showPage('ecpr',this)"><span class="ndot" style="background:var(--purple)"></span>ECPR プロトコール</div>
+    <div class="nitem" onclick="showPage('h4t4',this)"><span class="ndot" style="background:var(--cyan)"></span>可逆的原因（4H4T）</div>
+    <div class="sdsec">ROSC後管理</div>
+    <div class="nitem" onclick="showPage('flowrosc',this)" style="background:var(--green-bg);border-left:3px solid var(--green);font-weight:700;color:var(--green)"><span style="font-size:15px">🟢</span>ROSC後 ガイドフロー</div>
+    <div class="nitem" onclick="showPage('rosc',this)"><span class="ndot" style="background:var(--green)"></span>ROSC後初期対応</div>
+    <div class="nitem" onclick="showPage('ttm',this)"><span class="ndot" style="background:var(--cyan)"></span>体温管理療法（TTM）</div>
+    <div class="nitem" onclick="showPage('cath',this)"><span class="ndot" style="background:var(--pink)"></span>冠動脈造影 適応</div>
+    <div class="nitem" onclick="showPage('neuro',this)"><span class="ndot" style="background:var(--accent)"></span>神経学的予後予測</div>
+    <div class="nitem" onclick="showPage('rcast',this)"><span class="ndot" style="background:var(--green)"></span>rCAST スコア計算機</div>
+    <div class="sdsec">評価・予後</div>
+    <div class="nitem" onclick="showPage('prog',this)"><span class="ndot" style="background:var(--green)"></span>生存率・予後データ</div>
+    <div class="nitem" onclick="showPage('ckl',this)"><span class="ndot" style="background:var(--amber)"></span>チェックリスト</div>
+    <div class="sdsec">脳死・臓器移植</div>
+    <div class="nitem" onclick="showPage('braindeath',this)"><span class="ndot" style="background:var(--text-muted)"></span>脳死判定（2024年版）</div>
+    <div class="nitem" onclick="showPage('transplant',this)"><span class="ndot" style="background:var(--green)"></span>臓器提供フロー</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- ════════════════ ACLS ════════════════ -->
+    <div class="page active" id="page-acls">
+      <div class="page-header">
+        <div class="picon" style="background:var(--red-bg)">🔴</div>
+        <div><div class="ptitle">ACLS アルゴリズム</div><div class="psub">AHA 2025 / ERC 2025 準拠</div></div>
+      </div>
+      <div class="alert danger"><div class="atitle">⚡ 最優先</div>高品質な CPR 開始 → リズム確認 → 初期リズムに応じた分岐 → <strong>2分ごと</strong>にリズム確認・CPR交代</div>
+      <div class="sh">初期リズム選択</div>
+      <div class="rhsel">
+        <button class="rhbtn" id="bvf" onclick="selRhythm('vf')">⚡ VF / pVT<br><small style="font-weight:400;font-size:10px">Shockable</small></button>
+        <button class="rhbtn" id="bpea" onclick="selRhythm('pea')">〰️ PEA<br><small style="font-weight:400;font-size:10px">Non-Shockable</small></button>
+        <button class="rhbtn" id="basy" onclick="selRhythm('asy')">—— Asystole<br><small style="font-weight:400;font-size:10px">Non-Shockable</small></button>
+      </div>
+      <!-- VF -->
+      <div id="rvf" style="display:none">
+        <div class="g2">
+          <div class="card red">
+            <div class="ctitle">⚡ VF / pVT フロー</div>
+            <div class="flow">
+              <div class="fbox fred">🔴 VF / pVT 確認</div><div class="farr">↓</div>
+              <div class="fbox fred"><strong>即時 除細動</strong><br><small>二相性：150–200J初回 / 200J以降　単相性：360J</small></div><div class="farr">↓</div>
+              <div class="fbox">CPR 2分継続 — 静脈路 / IO 確保</div><div class="farr">↓</div>
+              <div class="fbox">リズム確認</div><div class="farr">↓</div>
+              <div class="fbranch"><div class="fbox fgreen">ROSC 🟢</div><div class="fbox fred">VF/pVT継続 → 2回目除細動</div></div>
+              <div class="farr">↓（継続 VF/pVT）</div>
+              <div class="fbox famber"><strong>アドレナリン 1mg IV</strong>（3〜5分ごと）</div><div class="farr">↓（3回目後）</div>
+              <div class="fbox famber"><strong>アミオダロン 300mg IV</strong> または リドカイン 1.5mg/kg</div>
+            </div>
+          </div>
+          <div>
+            <div class="card amber">
+              <div class="ctitle">💊 薬剤タイムライン</div>
+              <div class="slist">
+                <div class="step"><div class="snum red">1</div><div class="scont"><div class="stitle">除細動 → 即 CPR 再開</div><div class="sdesc">脈確認のための中断は最小限（&lt; 5秒）</div></div></div>
+                <div class="step"><div class="snum amber">2</div><div class="scont"><div class="stitle">2回目除細動後 → アドレナリン 1mg</div><div class="sdesc">以降 3〜5分ごとに反復</div></div></div>
+                <div class="step"><div class="snum amber">3</div><div class="scont"><div class="stitle">3回目除細動後 → アミオダロン 300mg</div><div class="sdesc">追加 150mg 可。リドカイン代替：1.5mg/kg（最大 3mg/kg）</div></div></div>
+              </div>
+            </div>
+            <div class="card blue mt" style="overflow-x:auto">
+              <div class="ctitle">⚡ 除細動エネルギー</div>
+              <table class="dt"><tr><th>種別</th><th>初回</th><th>2回目以降</th></tr>
+              <tr><td>二相性</td><td><span class="dd">150–200J</span></td><td><span class="dd">200J</span>以上</td></tr>
+              <tr><td>単相性</td><td><span class="dd">360J</span></td><td><span class="dd">360J</span></td></tr>
+              <tr><td>小児（1〜8歳）</td><td><span class="dd">2 J/kg</span></td><td><span class="dd">4 J/kg</span></td></tr></table>
+              <div class="alert info" style="margin-top:9px;margin-bottom:0"><div class="atitle">📌 AHA 2025</div>抵抗性VF（≥3回）→ <strong>二重逐次除細動（DSED）</strong>考慮可（COR 2b）</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- PEA -->
+      <div id="rpea" style="display:none">
+        <div class="alert warning"><div class="atitle">⚠️ PEA</div>除細動不可。アドレナリン ＋ CPR 継続しながら <strong>4H4T を系統的に検索</strong>（左メニュー参照）</div>
+        <div class="g2">
+          <div class="card amber">
+            <div class="ctitle">PEA フロー</div>
+            <div class="flow">
+              <div class="fbox famber">PEA 確認（電気活動あり・脈なし）</div><div class="farr">↓</div>
+              <div class="fbox">CPR 2分継続</div><div class="farr">↓</div>
+              <div class="fbox famber"><strong>アドレナリン 1mg IV</strong>（CPR開始後早期、以降3〜5分ごと）</div><div class="farr">↓</div>
+              <div class="fbox">FAST 超音波 → 可逆的原因検索</div><div class="farr">↓</div>
+              <div class="fbox fblue">心拍数が高い PEA（>60/min）→ 予後良好、積極的に原因治療</div>
+            </div>
+          </div>
+          <div class="card cyan">
+            <div class="ctitle">FAST 超音波チェック</div>
+            <div class="slist">
+              <div class="step"><div class="snum cyan">1</div><div class="scont"><div class="stitle">心嚢液・心タンポナーデ</div><div class="sdesc">→ 心嚢穿刺（剣状突起下）</div></div></div>
+              <div class="step"><div class="snum cyan">2</div><div class="scont"><div class="stitle">右室拡大 → 大量肺塞栓</div><div class="sdesc">→ tPA 50mg（アルテプラーゼ）</div></div></div>
+              <div class="step"><div class="snum cyan">3</div><div class="scont"><div class="stitle">胸膜スライディング消失 → 緊張性気胸</div><div class="sdesc">→ 針減圧 → 胸腔ドレーン</div></div></div>
+              <div class="step"><div class="snum cyan">4</div><div class="scont"><div class="stitle">著明な低心機能</div><div class="sdesc">→ ECPR 適応検討</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ASYSTOLE -->
+      <div id="rasy" style="display:none">
+        <div class="alert danger"><div class="atitle">🔴 Asystole — 予後最不良</div>可逆的原因がある場合を除き、蘇生の限界を早期に検討すること。</div>
+        <div class="g2">
+          <div class="card gray">
+            <div class="ctitle">Asystole フロー</div>
+            <div class="flow">
+              <div class="fbox">Asystole 確認（2誘導以上で確認）</div><div class="farr">↓</div>
+              <div class="fbox">CPR 継続</div><div class="farr">↓</div>
+              <div class="fbox famber"><strong>アドレナリン 1mg IV</strong><br><small>できるだけ早く投与・以降 <strong>3〜5分ごとに反復</strong>（PEA と同様）</small></div><div class="farr">↓</div>
+              <div class="fbox">4H4T 可逆的原因を検索</div><div class="farr">↓</div>
+              <div class="fbox">ROSC なし → 蘇生中止を検討<br><small>目安：CPR > 20分 かつ 可逆的原因なし</small></div>
+            </div>
+          </div>
+          <div class="card red">
+            <div class="ctitle">蘇生中止 考慮条件</div>
+            <div class="slist">
+              <div class="step"><div class="snum red">×</div><div class="scont"><div class="stitle">目撃なし・Bystander CPR なし</div><div class="sdesc">no-flow time が長いと推定</div></div></div>
+              <div class="step"><div class="snum red">×</div><div class="scont"><div class="stitle">CPR > 20分で ROSC なし</div><div class="sdesc">可逆的原因が否定的な場合。根拠：ERCガイドライン（ALS継続中にAsystoleが20分以上持続）・modified Goto's TOR rule（全日本Utstein 2016–2019、特異度99.1%・PPV 99.8%）・AHAのALS TOR rule（条件ベース）の3つが一致するコンセンサス的目安。</div></div></div>
+              <div class="step"><div class="snum red">×</div><div class="scont"><div class="stitle">末期疾患・DNR あり</div><div class="sdesc">本人の事前意思を最大限尊重</div></div></div>
+            </div>
+            <div class="alert warning" style="margin-top:9px;margin-bottom:0"><div class="atitle">継続すべき例外</div>低体温・溺水・薬物中毒・電解質異常など可逆的原因がある場合は積極的に継続</div>
+          </div>
+        </div>
+      </div>
+      <div class="sh mt">高品質 CPR の要件 <span class="evbadge">AHA 2025 Class I</span></div>
+      <div class="g2">
+        <div class="card blue"><div class="ctitle">圧迫の質</div><div class="gap"><span class="tag blue">深さ：5–6 cm</span><span class="tag blue">速さ：100–120 回/分</span><span class="tag green">完全リコイル</span><span class="tag amber">中断 &lt; 10秒</span><span class="tag blue">CPR fraction ≥ 60%</span></div></div>
+        <div class="card green"><div class="ctitle">換気・モニタリング</div><div class="gap"><span class="tag green">BVM：30:2</span><span class="tag green">挿管後：10回/分</span><span class="tag red">過換気禁止</span></div><div class="alert info" style="margin-top:9px;margin-bottom:0">EtCO₂ &lt; 10mmHg → 胸骨圧迫による心拍出量が不十分。圧迫の深さ・速さ・完全リコイル・術者交代を確認して<strong>CPRの質を改善する</strong>。突然の上昇（&gt;35mmHg）→ ROSC の可能性</div></div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge blue">AHA 2025</span><span>Panchal AR, et al. Part 9: Adult Advanced Life Support. <em>Circulation.</em> 2025;152(suppl 2). — 高品質CPR・除細動・薬剤投与タイミング</span></div><div class="ref-item"><span class="rbadge blue">ERC 2025</span><span>Soar J, et al. European Resuscitation Council Guidelines 2025. <em>Resuscitation.</em> 2025. — ACLSアルゴリズム全般</span></div><div class="ref-item"><span class="rbadge gray">ILCOR 2025</span><span>Perkins GD, et al. International Liaison Committee on Resuscitation 2025 CoSTR. — エビデンスレビュー</span></div><div class="ref-item"><span class="rbadge green">AHA 2025 COR I</span><span>高品質CPR：深さ5–6cm、速さ100–120回/分、CPR fraction ≥60%、過換気禁止（Class I）</span></div><div class="ref-item"><span class="rbadge amber">AHA 2025 COR 2b</span><span>抵抗性VF（≥3回）への二重逐次除細動（DSED）：考慮可（Class IIb, LOE B-R）</span></div><div class="ref-item"><span class="rbadge gray">PARAMEDIC2 2018</span><span>Perkins GD, et al. <em>N Engl J Med.</em> 2018;379:711–721. — アドレナリンはROSCを改善するが神経学的転帰は中立</span></div><div class="ref-item"><span class="rbadge red">ERC TOR</span><span>ERCガイドライン：ALS継続中にAsystoleが20分以上持続かつ可逆的原因なし → 蘇生中止を考慮</span></div><div class="ref-item"><span class="rbadge red">Goto TOR rule</span><span>Goto Y, et al. <em>Crit Care.</em> 2022. — modified Goto's TOR rule（全日本Utstein 2016–2019）：初期Asystole＋目撃なし＋EMS-CPR>20分＋搬入前ROSC無 → 特異度99.1%・PPV 99.8%</span></div></div>
+    </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ DRUGS ════════════════ -->
+    <div class="page" id="page-drugs">
+      <div class="page-header"><div class="picon" style="background:var(--amber-bg)">💊</div><div><div class="ptitle">薬剤・除細動</div><div class="psub">AHA 2025 推奨薬剤一覧</div></div></div>
+      <div class="card blue mb">
+        <div class="ctitle">体重別 投与量計算</div>
+        <div class="inrow"><span class="inlbl">患者体重</span><input type="number" class="infield" id="ptW" value="60" min="1" max="200" oninput="calcDoses()"><span class="inunit">kg</span></div>
+        <div id="doseDisp"></div>
+      </div>
+      <div class="card amber" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <div class="ctitle">心停止 蘇生薬剤</div>
+        <table class="dt" style="min-width:560px;">
+          <tr><th>薬剤名</th><th>適応リズム</th><th>投与量</th><th>タイミング</th><th>備考</th></tr>
+          <tr><td><span class="dn">アドレナリン</span><br><small style="color:var(--text-muted)">(エピネフリン)</small></td><td><span class="tag red">VF/pVT</span><span class="tag amber">PEA</span><span class="tag gray">Asystole</span></td><td><span class="dd">1 mg IV/IO</span></td><td><strong>Non-shockable（PEA/Asystole）：</strong>静脈路確保後できるだけ早く。以降 3〜5分ごと反復。<br><strong>VF/pVT：</strong>2回目除細動後から。以降 3〜5分ごと反復。</td><td>AHA 2025 Class I。ROSCは改善、神経学的転帰は中立。</td></tr>
+          <tr><td><span class="dn">アミオダロン</span></td><td><span class="tag red">抵抗性 VF/pVT</span></td><td><span class="dd">300 mg IV</span><br>追加：150 mg</td><td>3回目除細動後</td><td>リドカインよりエビデンス強。ROSC後は200mg/日維持。</td></tr>
+          <tr><td><span class="dn">リドカイン</span></td><td><span class="tag red">VF/pVT（代替）</span></td><td><span class="dd">1.5 mg/kg IV</span><br>最大 3 mg/kg</td><td>アミオダロン代替時</td><td>入手不可・禁忌時の代替。</td></tr>
+          <tr><td><span class="dn">重炭酸ナトリウム</span></td><td><span class="tag cyan">高K・TCA中毒</span></td><td><span class="dd">1 mEq/kg IV</span></td><td>原因確認時</td><td>通常の心停止には非推奨。</td></tr>
+          <tr><td><span class="dn">硫酸マグネシウム</span></td><td><span class="tag cyan">TdP（Torsades）</span></td><td><span class="dd">1–2 g IV</span>（10分以上）</td><td>TdP確認時</td><td>低Mg血症関連VFにも有効。</td></tr>
+          <tr><td><span class="dn">塩化カルシウム</span></td><td><span class="tag cyan">高K・低Ca・Ca拮抗薬</span></td><td><span class="dd">1 g IV</span></td><td>電解質異常確認時</td><td>通常の心停止には非推奨。</td></tr>
+          <tr><td><span class="dn">アトロピン</span></td><td><span class="tag gray">非推奨</span></td><td>—</td><td>—</td><td>AHA 2025：PEA/Asystoleへの定型投与は非推奨。</td></tr>
+        </table>
+      </div>
+      <div class="sh mt">血栓溶解療法（肺塞栓疑い）</div>
+      <div class="card purple" style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><div class="alert warning" style="margin-bottom:9px"><div class="atitle">適応</div>大量肺塞栓が心停止の原因と強く疑われる場合（FAST超音波：右室拡大・D-dimer↑）</div>
+      <table class="dt"><tr><th>薬剤</th><th>投与量</th><th>CPR継続</th><th>備考</th></tr><tr><td><span class="dn">アルテプラーゼ（tPA）</span></td><td><span class="dd">50 mg IV</span>（2分で）</td><td>投与後 60〜90分は CPR 継続</td><td>COR 2b：PE診断ほぼ確実または疑い強い場合</td></tr></table></div>
+    </div>
+
+    <!-- ════════════════ ECPR ════════════════ -->
+    <div class="page" id="page-ecpr">
+      <div class="page-header"><div class="picon" style="background:var(--purple-bg)">🔄</div><div><div class="ptitle">ECPR プロトコール</div><div class="psub">AHA 2025 · ILCOR 2025 · 院内フロー</div></div></div>
+      <div class="alert warning"><div class="atitle">⚠️ エビデンス</div>ECPRは「選択された患者・適切な施設体制」での救済療法（<strong>弱い推奨・低確実性</strong>）。患者選択と施設習熟度を十分考慮すること。</div>
+      <div class="g2">
+        <div class="card purple">
+          <div class="ctitle">適応基準（全て満たすこと）</div>
+          <div class="cklist">
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">目撃あり または Bystander CPR 実施</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">初期リズム VF/pVT（または可逆的原因のある PEA）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">おおむね70歳以下・独歩自立・重篤な合併症なし</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">通常CPR 10〜15分以上で ROSC 得られない</div></label>
+          </div>
+          <div class="alert info" style="margin-top:9px;margin-bottom:0"><div class="atitle">注記</div>年齢は目安。機能的自立度・合併症で個別判断。</div>
+        </div>
+        <div class="card red">
+          <div class="ctitle">相対的除外基準</div>
+          <div class="slist">
+            <div class="step"><div class="snum red">×</div><div class="scont"><div class="stitle">No-flow time > 5〜10分（CPR未実施）</div></div></div>
+            <div class="step"><div class="snum red">×</div><div class="scont"><div class="stitle">Asystole・可逆的原因なし</div></div></div>
+            <div class="step"><div class="snum red">×</div><div class="scont"><div class="stitle">末期疾患・悪性腫瘍・重度認知症</div></div></div>
+            <div class="step"><div class="snum red">×</div><div class="scont"><div class="stitle">透析・重篤な臓器不全</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="sh mt">院内フロー</div>
+      <div class="g2">
+        <div class="card blue">
+          <div class="ctitle">Flow 1：VF / pVT</div>
+          <div class="flow">
+            <div class="fbox fred">🔴 VF/pVT確認 → トリガー条件確認</div><div class="farr">↓</div>
+            <div class="fbox"><strong>救急科：</strong>循環器内科当番医（72222）へ Call</div><div class="farr">↓</div>
+            <div class="fbox"><strong>循環器内科：</strong>カテナースへCall、ECMO回路作成</div><div class="farr">↓</div>
+            <div class="fbox fgreen">救急車からカテ室（Direct Cath Lab）へ直行 🟢</div>
+          </div>
+        </div>
+        <div class="card amber">
+          <div class="ctitle">Flow 2：蘇生/心停止繰り返す</div>
+          <div class="flow">
+            <div class="fbox">「ECMO適応」を循環器当番（72222）へ Call</div><div class="farr">↓</div>
+            <div class="fbox">救急外来で用手 CPR 継続（胸部損傷軽減のため）</div><div class="farr">↓</div>
+            <div class="fbox famber">ECMO準備完了 → 大腿動静脈カニュレーション</div><div class="farr">↓</div>
+            <div class="fbox fgreen">ECMO フロー確立 → 原因検索・治療</div>
+          </div>
+        </div>
+      </div>
+      <div class="sh mt">主要 RCT エビデンス</div>
+      <div class="card" style="overflow-x:auto">
+        <table class="dt">
+          <tr><th>試験</th><th>対象</th><th>結果</th><th>評価</th></tr>
+          <tr><td><span class="dn">ARREST</span> (2020)</td><td>OHCA VF n=30</td><td>ECPR群：生存退院率↑（早期終了）</td><td><span class="tag green">有益</span> 小規模</td></tr>
+          <tr><td><span class="dn">Prague OHCA</span> (2022)</td><td>全リズム n=264</td><td>30日神経学的転帰改善。180日は有意差なし</td><td><span class="tag amber">混在</span></td></tr>
+          <tr><td><span class="dn">INCEPTION</span> (2023)</td><td>VF/pVT n=134</td><td>有意差なし（搬送遅延が影響）</td><td><span class="tag amber">中立</span></td></tr>
+          <tr><td><span class="dn">プール解析</span> (Lancet 2025)</td><td>ARREST＋Prague</td><td>shockable：47.1% vs 28.3%（NNT=5）</td><td><span class="tag green">有益（限定）</span></td></tr>
+        </table>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge amber">AHA 2025 COR 2a</span><span>ECPR：選択された患者（VF/pVTで適切なCPR ≥15分後にROSCなし）への考慮（Class IIa）</span></div><div class="ref-item"><span class="rbadge gray">ILCOR 2025</span><span>弱い推奨・低確実性エビデンス — 患者選択と施設習熟度を十分考慮すること</span></div><div class="ref-item"><span class="rbadge green">ARREST 2020</span><span>Yannopoulos D, et al. <em>Lancet.</em> 2020;396:1693–1702. — OHCA VF n=30：ECPR群で生存退院率↑（早期終了）</span></div><div class="ref-item"><span class="rbadge amber">Prague OHCA 2022</span><span>Belohlavek J, et al. <em>N Engl J Med.</em> 2022;386:1508–1520. — 30日神経転帰改善、180日は有意差なし</span></div><div class="ref-item"><span class="rbadge amber">INCEPTION 2023</span><span>Suverein MM, et al. <em>N Engl J Med.</em> 2023;388:299–309. — 有意差なし（搬送遅延が影響）</span></div><div class="ref-item"><span class="rbadge green">Pooled 2025</span><span>Bougouin W, et al. <em>Lancet Respir Med.</em> 2025. — ARREST＋Prague プール解析：shockable rhythm でNNT=5</span></div></div>
+    </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 4H4T ════════════════ -->
+    <div class="page" id="page-h4t4">
+      <div class="page-header"><div class="picon" style="background:var(--cyan-bg)">🔍</div><div><div class="ptitle">可逆的原因（4H4T）</div><div class="psub">Non-shockable rhythm では必ず除外</div></div></div>
+      <div class="alert info"><div class="atitle">🔑 ポイント</div>PEA・Asystoleでは系統的に 4H4T を検索・治療。FAST超音波・血ガス・電解質を同時進行で評価する。</div>
+      <div class="g2">
+        <div class="card cyan">
+          <div class="ctitle">4H — Hypo 系</div>
+          <div class="slist">
+            <div class="step"><div class="snum cyan">H1</div><div class="scont"><div class="stitle">Hypoxia（低酸素）</div><div class="sdesc">気管挿管・高流量O₂。両側呼吸音確認（チューブ位置）。</div></div></div>
+            <div class="step"><div class="snum cyan">H2</div><div class="scont"><div class="stitle">Hypovolemia（循環血液量減少）</div><div class="sdesc">急速輸液（晶質液 1L）。外傷では出血源コントロール優先。</div></div></div>
+            <div class="step"><div class="snum cyan">H3</div><div class="scont"><div class="stitle">Hypo/Hyperkalemia（電解質異常）</div><div class="sdesc">高K：CaCl₂ 1g + 重炭酸Na 50mEq + GI療法。低K：KCl補充。</div></div></div>
+            <div class="step"><div class="snum cyan">H4</div><div class="scont"><div class="stitle">Hypothermia（低体温）</div><div class="sdesc">深部体温 &lt;30°C。積極的加温。「低体温では死亡を確認するな」。ECPR適応あり。</div></div></div>
+          </div>
+        </div>
+        <div class="card amber">
+          <div class="ctitle">4T — Tension 系</div>
+          <div class="slist">
+            <div class="step"><div class="snum amber">T1</div><div class="scont"><div class="stitle">Tension Pneumothorax（緊張性気胸）</div><div class="sdesc">超音波：胸膜スライディング消失。<strong>→ 針減圧（第2肋間・鎖骨中線）→ 胸腔ドレーン</strong></div></div></div>
+            <div class="step"><div class="snum amber">T2</div><div class="scont"><div class="stitle">Tamponade（心タンポナーデ）</div><div class="sdesc">FAST：心嚢液確認。<strong>→ 心嚢穿刺（剣状突起下）</strong></div></div></div>
+            <div class="step"><div class="snum amber">T3</div><div class="scont"><div class="stitle">Thrombosis — Pulmonary（肺塞栓）</div><div class="sdesc">FAST：右室拡大・D-dimer↑。<strong>→ tPA 50mg → CPR 60〜90分継続</strong></div></div></div>
+            <div class="step"><div class="snum amber">T4</div><div class="scont"><div class="stitle">Toxins（中毒・薬物過量）</div><div class="sdesc">TCA：重炭酸Na。オピオイド：ナロキソン 0.4〜2mg。β遮断薬：グルカゴン。局所麻酔：脂肪乳剤。</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="sh mt">特殊状況</div>
+      <div class="ga">
+        <div class="card blue"><div class="ctitle">溺水・低体温</div><div class="sdesc" style="color:var(--text-dim)">深部体温確認まで蘇生中止しない。ECPR（体外循環復温）を積極的に検討。目標復温：35°C以上。</div></div>
+        <div class="card purple"><div class="ctitle">妊婦の心停止</div><div class="sdesc" style="color:var(--text-dim)">子宮を左側に手動偏位。4分以内に蘇生できない場合は蘇生的帝王切開を検討（5分以内）。22週以上で考慮。</div></div>
+        <div class="card green"><div class="ctitle">急性冠症候群（ACS）</div><div class="sdesc" style="color:var(--text-dim)">VF/pVTの最多原因。ROSC後 12誘導心電図でST上昇 → 緊急CAG。意識不明でも施行を検討。</div></div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge blue">AHA 2025</span><span>Panchal AR, et al. Part 9. <em>Circulation.</em> 2025. — 可逆的原因の系統的評価</span></div><div class="ref-item"><span class="rbadge blue">ERC 2025</span><span>Soar J, et al. ERC Guidelines 2025. — 4H4Tの評価と治療</span></div><div class="ref-item"><span class="rbadge amber">AHA 2025 COR I</span><span>肺塞栓による心停止への血栓溶解療法（アルテプラーゼ）：COR 2b</span></div><div class="ref-item"><span class="rbadge gray">ACOG 2017</span><span>American College of Obstetricians and Gynecologists. Maternal Cardiac Arrest. 2017. — 妊婦の心停止管理・蘇生的帝王切開（5分以内）</span></div></div>
+    </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ ROSC GUIDED FLOW ════════════════ -->
+    <div class="page" id="page-flowrosc">
+      <div class="page-header">
+        <div class="picon" style="background:var(--green-bg)">🟢</div>
+        <div>
+          <div class="ptitle">ROSC後 ガイドフロー</div>
+          <div class="psub">症例情報を入力しながらフローを進めると、個別化されたサマリーが生成されます</div>
+        </div>
+        <button onclick="rfReset()" style="margin-left:auto;padding:6px 14px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text-dim);cursor:pointer;font-size:12px;font-family:var(--sans);font-weight:700">↺ リセット</button>
+      </div>
+
+      <!-- PROGRESS BAR -->
+      <div style="margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em">PROGRESS</span>
+          <span id="rf-progress-label" style="font-family:var(--mono);font-size:11px;color:var(--accent)">STEP 1 / 7</span>
+        </div>
+        <div style="height:6px;background:var(--surface3);border-radius:3px;overflow:hidden">
+          <div id="rf-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--green),var(--accent));border-radius:3px;transition:width .4s ease;width:14%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px">
+          <span id="rf-step-dots" style="display:flex;gap:6px"></span>
+        </div>
+      </div>
+
+      <!-- STEPS CONTAINER -->
+      <div id="rf-steps-container"></div>
+
+      <!-- SUMMARY CONTAINER (hidden until complete) -->
+      <div id="rf-summary" style="display:none"></div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge blue">AHA 2025</span><span>Post-Cardiac Arrest Care（Part 11）: Berg KM, et al. <em>Circulation.</em> 2025;152(suppl 2). — ROSC後初期管理・TTM・CAG判断</span></div><div class="ref-item"><span class="rbadge blue">ERC 2025</span><span>Nolan JP, et al. Post-Resuscitation Care. ERC Guidelines 2025. <em>Resuscitation.</em> 2025.</span></div><div class="ref-item"><span class="rbadge red">TOMAHAWK / COACT</span><span>ST↑なし昏睡患者への常規緊急CAG非推奨（<em>N Engl J Med.</em> 2019, 2021）</span></div><div class="ref-item"><span class="rbadge amber">TTM2 2021</span><span>TTM目標温度：Dankiewicz J, et al. <em>N Engl J Med.</em> 2021;384:2283. — 32〜37.5°Cの体温管理</span></div><div class="ref-item"><span class="rbadge gray">rCAST</span><span>Nishikimi M, et al. <em>Resuscitation.</em> 2021. — ROSC後早期の神経学的予後予測スコア</span></div><div class="ref-item"><span class="rbadge gray">ERC/ESICM 2021</span><span>神経学的予後予測：多モーダル評価（72h以降）. <em>Intensive Care Med.</em> 2022;48:261.</span></div></div>
+    </div>
+    </div>
+
+    <!-- ════════════════ POST-ROSC ════════════════ -->
+    <div class="page" id="page-rosc">
+      <div class="page-header"><div class="picon" style="background:var(--green-bg)">✅</div><div><div class="ptitle">ROSC後 初期対応</div><div class="psub">Post-Cardiac Arrest Care — AHA 2025</div></div></div>
+      <div class="alert success"><div class="atitle">🟢 ROSC 確認</div>脈拍触知 ＋ EtCO₂ の突然の上昇（> 35 mmHg）。直ちに以下を開始する。</div>
+      <div class="vitals">
+        <div class="vbox"><div class="vlabel">MAP 目標</div><div class="vval warn">≥ 65</div><div class="vunit">mmHg</div></div>
+        <div class="vbox"><div class="vlabel">SpO₂ 目標</div><div class="vval ok">94–98</div><div class="vunit">%</div></div>
+        <div class="vbox"><div class="vlabel">PaCO₂ 目標</div><div class="vval warn">35–45</div><div class="vunit">mmHg</div></div>
+        <div class="vbox"><div class="vlabel">血糖目標</div><div class="vval warn">140–180</div><div class="vunit">mg/dL</div></div>
+      </div>
+      <div class="g2">
+        <div class="card green">
+          <div class="ctitle">初期対応チェックリスト</div>
+          <div class="cklist">
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">12誘導心電図 → ST変化確認</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">SpO₂：94–98% に調整（過酸素禁止）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">PaCO₂：35〜45mmHg（過換気禁止）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">MAP ≥ 65mmHg 維持（ノルアドレナリン）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">TTM プロトコール開始（昏睡 → 32〜37.5°C）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">緊急採血（BGA・CBC・生化・凝固・Trop・BNP・Lac）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">尿道カテーテル（尿量モニタリング）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">STEMI → 緊急 PCI</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">頭部 CT（神経学的原因除外）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">ICU 転床手配</div></label>
+          </div>
+        </div>
+        <div>
+          <div class="card red">
+            <div class="ctitle">⚠️ 絶対禁止事項</div>
+            <div class="slist">
+              <div class="step"><div class="snum red">!</div><div class="scont"><div class="stitle">高酸素血症（SpO₂ 100%維持）</div><div class="sdesc">再灌流障害を増悪。94–98%に調整。</div></div></div>
+              <div class="step"><div class="snum red">!</div><div class="scont"><div class="stitle">過換気（PaCO₂ &lt; 35mmHg）</div><div class="sdesc">脳血管収縮 → 脳虚血増悪。</div></div></div>
+              <div class="step"><div class="snum red">!</div><div class="scont"><div class="stitle">低血圧（MAP &lt; 65mmHg）放置</div><div class="sdesc">脳・心臓の灌流不全。積極的に昇圧剤を使用。</div></div></div>
+            </div>
+          </div>
+          <div class="card blue mt" style="overflow-x:auto">
+            <div class="ctitle">昇圧剤選択（ROSC後）</div>
+            <table class="dt">
+              <tr><th>薬剤</th><th>適応</th><th>開始</th></tr>
+              <tr><td><span class="dn">ノルアドレナリン</span></td><td>第1選択</td><td><span class="dd">0.1γ〜</span></td></tr>
+              <tr><td><span class="dn">ドブタミン</span></td><td>心機能低下合併</td><td><span class="dd">2〜5γ〜</span></td></tr>
+              <tr><td><span class="dn">アドレナリン</span></td><td>難治性ショック</td><td><span class="dd">0.1γ〜</span></td></tr>
+            </table>
+          </div>
+        </div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge blue">AHA 2025</span><span>Berg KM, et al. Part 11: Post–Cardiac Arrest Care. <em>Circulation.</em> 2025;152(suppl 2). — ROSC後管理全般</span></div><div class="ref-item"><span class="rbadge green">AHA 2025 COR I</span><span>SpO₂ 94–98%（高酸素禁止）・PaCO₂ 35–45mmHg（過換気禁止）・MAP ≥65mmHg（Class I）</span></div><div class="ref-item"><span class="rbadge green">AHA 2025 COR I</span><span>血糖管理：>180mg/dLでインスリン開始、目標140–180mg/dL（Class I）</span></div><div class="ref-item"><span class="rbadge red">TOMAHAWK 2021</span><span>Desch S, et al. <em>N Engl J Med.</em> 2021;385:2357–2367. — ST↑なし昏睡：即時CAGは生存率を改善しない</span></div><div class="ref-item"><span class="rbadge red">COACT 2019</span><span>Lemkes JS, et al. <em>N Engl J Med.</em> 2019;380:1397–1407. — ST↑なし昏睡：即時vs遅延CAGに有意差なし</span></div></div>
+    </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ TTM ════════════════ -->
+    <div class="page" id="page-ttm">
+      <div class="page-header"><div class="picon" style="background:var(--cyan-bg)">🌡️</div><div><div class="ptitle">体温管理療法（TTM）</div><div class="psub">Target Temperature Management — AHA 2025</div></div></div>
+      <div class="alert info"><div class="atitle">📌 AHA 2025 推奨</div>心停止後昏睡患者に対し、<strong>32〜37.5°C での体温管理（発熱の予防）</strong>を推奨（COR 1, LOE B-NR）。</div>
+      <div class="g2">
+        <div class="card cyan">
+          <div class="ctitle">体温管理フロー</div>
+          <div class="flow">
+            <div class="fbox fgreen">ROSC 確認</div><div class="farr">↓</div>
+            <div class="fbox"><strong>昏睡状態か？</strong>（GCS &lt; 8）</div>
+            <div class="fbranch"><div class="fbox fblue" style="font-size:12px">Yes → TTM 開始<br>32〜37.5°C（≥ 24時間）</div><div class="fbox" style="font-size:12px">No → 経過観察<br>（発熱は回避）</div></div>
+            <div class="farr">↓</div>
+            <div class="fbox">復温：0.25〜0.5°C/時（ゆっくり）</div><div class="farr">↓</div>
+            <div class="fbox famber">発熱（&gt;37.5°C）の予防：72時間維持</div>
+          </div>
+        </div>
+        <div>
+          <div class="card blue">
+            <div class="ctitle">実施方法</div>
+            <div class="slist">
+              <div class="step"><div class="snum cyan">1</div><div class="scont"><div class="stitle">体表冷却（第1選択）</div><div class="sdesc">冷却ブランケット・冷却パッド（Arctic Sun等）</div></div></div>
+              <div class="step"><div class="snum cyan">2</div><div class="scont"><div class="stitle">血管内冷却</div><div class="sdesc">精密な温度管理が可能。大腿静脈カテーテル。</div></div></div>
+              <div class="step"><div class="snum cyan">3</div><div class="scont"><div class="stitle">体温モニタリング</div><div class="sdesc">食道温または膀胱温（直腸温は反応遅延あり）</div></div></div>
+            </div>
+          </div>
+          <div class="card amber mt">
+            <div class="ctitle">合併症モニタリング</div>
+            <div class="gap"><span class="tag amber">低K血症</span><span class="tag amber">高血糖</span><span class="tag amber">凝固障害</span><span class="tag amber">感染</span><span class="tag amber">不整脈</span><span class="tag amber">Shivering</span></div>
+            <div style="margin-top:8px;color:var(--text-dim);font-size:12px">Shivering 対策：Mg・ブスコパン・鎮静薬（代謝亢進し体温管理を妨げる）</div>
+          </div>
+        </div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge green">AHA 2025 COR I</span><span>TTM：昏睡状態の心停止後患者に対し32〜37.5°Cでの体温管理（≥24時間）を推奨（Class I, LOE B-NR）</span></div><div class="ref-item"><span class="rbadge amber">TTM2 2021</span><span>Dankiewicz J, et al. <em>N Engl J Med.</em> 2021;384:2283–2294. — 33°C vs 37.5°C：30日生存率に差なし → 積極的冷却の絶対的優位性は否定</span></div><div class="ref-item"><span class="rbadge gray">TTM 2013</span><span>Nielsen N, et al. <em>N Engl J Med.</em> 2013;369:2197–2206. — 33°C vs 36°C：主要転帰に差なし</span></div><div class="ref-item"><span class="rbadge blue">AHA 2025</span><span>発熱（>37.5°C）の予防：72時間以上継続。Shiveringは代謝亢進のため積極的に管理すること</span></div></div>
+    </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ CATH ════════════════ -->
+    <div class="page" id="page-cath">
+      <div class="page-header"><div class="picon" style="background:var(--pink-bg)">🫀</div><div><div class="ptitle">冠動脈造影（CAG）適応評価</div><div class="psub">AHA 2025 改訂推奨</div></div></div>
+      <div class="alert warning"><div class="atitle">📌 AHA 2025 重要改訂</div>ST上昇なし・昏睡患者への<strong>常規緊急 CAG は推奨されなくなった</strong>（TOMAHAWK・COACT 試験結果を受けCOR格下げ）。STEMI は従来通り緊急 PCI 推奨。</div>
+      <div class="g2">
+        <div class="card pink">
+          <div class="ctitle">緊急 CAG 判断フロー</div>
+          <div class="flow">
+            <div class="fbox">ROSC後 12誘導心電図</div>
+            <div class="fbranch">
+              <div><div class="fbox fred">STEMI / 新規 LBBB</div><div class="farr">↓</div><div class="fbox fgreen"><strong>緊急 PCI</strong><br>意識不明でも施行<br>COR 1</div></div>
+              <div><div class="fbox">ST 上昇なし</div><div class="farr">↓</div><div class="fbox famber">個別判断<br>（ACS強く疑う場合）</div></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card blue">
+            <div class="ctitle">CAG を推奨する追加因子</div>
+            <div class="cklist">
+              <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">心停止前の胸痛・胸部不快感</div></label>
+              <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">Troponin の急峻な上昇</div></label>
+              <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">VF/pVT が繰り返す・難治性</div></label>
+              <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">FAST超音波での壁運動異常</div></label>
+              <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">神経学的予後が良好と予測される</div></label>
+            </div>
+          </div>
+          <div class="card red mt">
+            <div class="ctitle">根拠 RCT</div>
+            <div style="font-size:12px;color:var(--text-dim);line-height:1.8">
+              <strong style="color:var(--red)">COACT (NEJM 2019)：</strong>ST↑なし昏睡患者で即時 vs 遅延 CAG に生存率差なし<br>
+              <strong style="color:var(--red)">TOMAHAWK (NEJM 2021)：</strong>同様。即時 CAG で死亡率が数値上高い傾向<br>
+              → <strong>ST↑なし・昏睡では常規緊急 CAG を推奨しない</strong>
+            </div>
+          </div>
+        </div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge green">AHA 2025 COR I</span><span>STEMI or 新規LBBB：意識の有無にかかわらず緊急PCI（Class I）</span></div><div class="ref-item"><span class="rbadge red">AHA 2025</span><span>ST上昇なし・昏睡患者：常規緊急CAGは推奨しない（COR格下げ）</span></div><div class="ref-item"><span class="rbadge red">TOMAHAWK 2021</span><span>Desch S, et al. <em>N Engl J Med.</em> 2021;385:2357–2367. — 即時CAGで死亡率が数値上高い傾向</span></div><div class="ref-item"><span class="rbadge red">COACT 2019</span><span>Lemkes JS, et al. <em>N Engl J Med.</em> 2019;380:1397–1407. — 即時vs遅延CAGに生存率差なし</span></div></div>
+    </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ NEURO ════════════════ -->
+    <div class="page" id="page-neuro">
+      <div class="page-header"><div class="picon" style="background:var(--accent-bg)">🧠</div><div><div class="ptitle">神経学的予後予測</div><div class="psub">Neuroprognostication — AHA 2025</div></div></div>
+      <div class="alert warning"><div class="atitle">⚠️ 重要原則</div>予後予測は <strong>ROSC後 72時間以降</strong>（TTM施行例はさらに遅らせる）。<strong>単一指標で判断せず複数指標を組み合わせる</strong>。</div>
+      <div class="ga">
+        <div class="card blue"><div class="ctitle">🕐 24時間以内</div><div class="slist"><div class="step"><div class="snum">①</div><div class="scont"><div class="stitle">EEG：発作活動・Burst suppression</div><div class="sdesc">Malignant pattern：burst suppression / flat EEG → 不良サイン</div></div></div></div></div>
+        <div class="card amber">
+          <div class="ctitle">🕑 24〜72時間</div>
+          <div class="slist">
+            <div class="step"><div class="snum amber">②</div><div class="scont"><div class="stitle">NSE（神経特異エノラーゼ）</div><div class="sdesc">48〜72h：<strong>> 60 μg/L → 不良予後</strong>（高特異度）</div></div></div>
+            <div class="step"><div class="snum amber">③</div><div class="scont"><div class="stitle">SSEP（体性感覚誘発電位）</div><div class="sdesc">N20 波の両側消失 → 不良予後の強い予測因子（偽陰性 &lt; 5%）</div></div></div>
+          </div>
+        </div>
+        <div class="card red">
+          <div class="ctitle">🕓 72時間以降</div>
+          <div class="slist">
+            <div class="step"><div class="snum red">④</div><div class="scont"><div class="stitle">神経学的診察</div><div class="sdesc">対光反射・角膜反射消失 → 不良。ミオクロニーてんかんの持続</div></div></div>
+            <div class="step"><div class="snum red">⑤</div><div class="scont"><div class="stitle">頭部 MRI（DWI）</div><div class="sdesc">広汎な拡散制限（皮質・基底核）→ 重篤な脳障害</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="sh mt">不良予後指標 一覧</div>
+      <div class="card red" style="overflow-x:auto">
+        <table class="dt">
+          <tr><th>指標</th><th>不良予後基準</th><th>感度</th><th>特異度</th><th>推奨</th></tr>
+          <tr><td>対光反射消失（72h）</td><td>両側消失</td><td>~19%</td><td>~100%</td><td><span class="tag red">高推奨</span></td></tr>
+          <tr><td>N20 SSEP 消失</td><td>両側消失</td><td>~45%</td><td>~100%</td><td><span class="tag red">高推奨</span></td></tr>
+          <tr><td>NSE（72h）</td><td>> 60 μg/L</td><td>~30%</td><td>~100%</td><td><span class="tag amber">推奨</span></td></tr>
+          <tr><td>EEG（malignant）</td><td>Burst suppression / Flat</td><td>~50%</td><td>~85%</td><td><span class="tag amber">推奨</span></td></tr>
+          <tr><td>MRI DWI</td><td>広汎な拡散制限</td><td>~60%</td><td>~93%</td><td><span class="tag blue">補助</span></td></tr>
+        </table>
+        <div class="alert danger" style="margin-top:9px;margin-bottom:0"><div class="atitle">⚠️ 早期断定による機会損失に注意</div>不良予後と早期に断定して治療を中止すると、本来助かるべき患者を見逃す恐れがあります。複数指標が一致して初めて治療方針を決定すること。</div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge blue">ERC/ESICM 2021</span><span>Sandroni C, et al. <em>Intensive Care Med.</em> 2022;48:261–269. — 多モーダル神経予後予測のコンセンサス指針</span></div><div class="ref-item"><span class="rbadge blue">AHA 2025</span><span>Berg KM, et al. Part 11. <em>Circulation.</em> 2025. — 神経学的予後予測の多モーダル評価</span></div><div class="ref-item"><span class="rbadge amber">AHA 2025</span><span>予後評価タイミング：ROSC後72時間以降（TTM施行例はさらに遅延）</span></div><div class="ref-item"><span class="rbadge gray">Zanatta 2021</span><span>対光反射消失（72h両側）：感度~19%、特異度~100%（高特異度の不良予後指標）</span></div><div class="ref-item"><span class="rbadge gray">SSEP</span><span>N20 SSEP両側消失：偽陰性 <5%（高特異度の不良予後指標）</span></div><div class="ref-item"><span class="rbadge gray">NSE</span><span>NSE >60 μg/L（72h）：高特異度の不良予後指標（施設基準値との照合必要）</span></div><div class="ref-item"><span class="rbadge red">AHA 2025</span><span>⚠️ 早期断定による機会損失：単一指標での治療中止を避けること（AHA 2025）</span></div></div>
+    </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ rCAST ════════════════ -->
+    <div class="page" id="page-rcast">
+      <div class="page-header">
+        <div class="picon" style="background:var(--green-bg)">🧮</div>
+        <div>
+          <div class="ptitle">rCAST スコア 計算機</div>
+          <div class="psub">Revised Post-Cardiac Arrest Syndrome for Therapeutic Hypothermia Score</div>
+        </div>
+      </div>
+
+      <div class="alert info">
+        <div class="atitle">📌 使い方・タイミング</div>
+        ROSC達成後、<strong>ICU入室前（6時間以内）</strong>に5変数を入力して計算。TTM 施行・非施行を問わず使用可。神経学的転帰（30日 CPC 1–2）の早期予測に。
+      </div>
+
+      <div class="g2">
+        <!-- 入力パネル -->
+        <div class="card green">
+          <div class="ctitle">📋 入力項目（5変数）</div>
+
+          <!-- 1. 初期リズム -->
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">① 初期リズム</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;transition:all .15s;font-size:13px" id="lbl_r1">
+                <input type="radio" name="rc_rhythm" value="0" onchange="calcRcast()" style="accent-color:var(--green)"> VF / pVT
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;transition:all .15s;font-size:13px" id="lbl_r2">
+                <input type="radio" name="rc_rhythm" value="3" onchange="calcRcast()" style="accent-color:var(--green)"> Non-shockable（PEA / Asystole）
+              </label>
+            </div>
+          </div>
+
+          <!-- 2. 目撃・ROSC時間 -->
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">② 目撃の有無 ＆ ROSC までの時間</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_w1">
+                <input type="radio" name="rc_witness" value="0" onchange="calcRcast()" style="accent-color:var(--green)"> 目撃あり・ROSC ≤ 20分
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_w2">
+                <input type="radio" name="rc_witness" value="4" onchange="calcRcast()" style="accent-color:var(--green)"> 目撃あり・ROSC > 20分
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_w3">
+                <input type="radio" name="rc_witness" value="6" onchange="calcRcast()" style="accent-color:var(--green)"> 目撃なし
+              </label>
+            </div>
+          </div>
+
+          <!-- 3. pH -->
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">③ 動脈血 pH（搬入時）</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_p1">
+                <input type="radio" name="rc_ph" value="0" onchange="calcRcast()" style="accent-color:var(--green)"> pH ≥ 7.2
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_p2">
+                <input type="radio" name="rc_ph" value="3" onchange="calcRcast()" style="accent-color:var(--green)"> 7.0 ≤ pH &lt; 7.2
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_p3">
+                <input type="radio" name="rc_ph" value="5" onchange="calcRcast()" style="accent-color:var(--green)"> pH &lt; 7.0
+              </label>
+            </div>
+          </div>
+
+          <!-- 4. Lactate -->
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">④ 乳酸値 Lactate（搬入時）</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_l1">
+                <input type="radio" name="rc_lac" value="0" onchange="calcRcast()" style="accent-color:var(--green)"> &lt; 5 mmol/L
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_l2">
+                <input type="radio" name="rc_lac" value="2" onchange="calcRcast()" style="accent-color:var(--green)"> 5 ≤ Lac &lt; 10 mmol/L
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_l3">
+                <input type="radio" name="rc_lac" value="4" onchange="calcRcast()" style="accent-color:var(--green)"> ≥ 10 mmol/L
+              </label>
+            </div>
+          </div>
+
+          <!-- 5. GCS Motor -->
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">⑤ GCS 運動スコア（ROSC直後）</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_g1">
+                <input type="radio" name="rc_gcs" value="0" onchange="calcRcast()" style="accent-color:var(--green)"> M3–6（屈曲以上）
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_g2">
+                <input type="radio" name="rc_gcs" value="1" onchange="calcRcast()" style="accent-color:var(--green)"> M2（除皮質姿勢）
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px" id="lbl_g3">
+                <input type="radio" name="rc_gcs" value="2" onchange="calcRcast()" style="accent-color:var(--green)"> M1（無反応）
+              </label>
+            </div>
+          </div>
+
+          <button onclick="resetRcast()" style="padding:7px 18px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text-dim);cursor:pointer;font-family:var(--sans);font-size:12px;font-weight:700;margin-top:4px">↺ リセット</button>
+        </div>
+
+        <!-- 結果パネル -->
+        <div>
+          <div class="card blue" id="rcast-result" style="min-height:180px">
+            <div class="ctitle">📊 スコア計算結果</div>
+            <div id="rcast-output">
+              <div style="color:var(--text-muted);font-size:13px;padding:12px 0">← 左の5項目を全て選択すると自動計算されます</div>
+            </div>
+          </div>
+
+          <div class="card amber mt" style="overflow-x:auto">
+            <div class="ctitle">重症度分類（rCAST）</div>
+            <table class="dt">
+              <tr><th>分類</th><th>スコア</th><th>良好神経転帰（CPC 1–2）</th></tr>
+              <tr>
+                <td><span class="tag green" style="font-size:12px">低重症度</span></td>
+                <td><span style="font-family:var(--mono);font-weight:700">≤ 5.5</span></td>
+                <td style="color:var(--green);font-weight:700">約 60–80%</td>
+              </tr>
+              <tr>
+                <td><span class="tag amber" style="font-size:12px">中等度重症</span></td>
+                <td><span style="font-family:var(--mono);font-weight:700">6.0–14.0</span></td>
+                <td style="color:var(--amber);font-weight:700">約 10–30%</td>
+              </tr>
+              <tr>
+                <td><span class="tag red" style="font-size:12px">高重症度</span></td>
+                <td><span style="font-family:var(--mono);font-weight:700">≥ 14.5</span></td>
+                <td style="color:var(--red);font-weight:700">&lt; 5%（ほぼ不良）</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="card purple mt">
+            <div class="ctitle">⚠️ 使用上の注意</div>
+            <div class="slist">
+              <div class="step" style="padding:9px">
+                <div class="snum" style="background:var(--purple);width:22px;height:22px;font-size:11px">1</div>
+                <div class="scont"><div class="sdesc">TTM施行例で主に検証。非TTM例でも一定の精度あり（AUC 0.80–0.88）。</div></div>
+              </div>
+              <div class="step" style="padding:9px">
+                <div class="snum" style="background:var(--purple);width:22px;height:22px;font-size:11px">2</div>
+                <div class="scont"><div class="sdesc"><strong>ECPR施行例では精度が低下</strong>（AUC ≒ 0.60）するため過信しないこと。</div></div>
+              </div>
+              <div class="step" style="padding:9px">
+                <div class="snum" style="background:var(--purple);width:22px;height:22px;font-size:11px">3</div>
+                <div class="scont"><div class="sdesc">スコア単独で治療中止の判断をしないこと。72h 以降の多モーダル評価と組み合わせる。</div></div>
+              </div>
+              <div class="step" style="padding:9px">
+                <div class="snum" style="background:var(--purple);width:22px;height:22px;font-size:11px">4</div>
+                <div class="scont"><div class="sdesc">院内心停止（IHCA）にも外部検証済み（AUC 0.88）。</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- スコア計算式の説明 -->
+      <div class="sh mt">スコア計算式（rCAST）</div>
+      <div class="card blue" style="overflow-x:auto">
+        <div class="ctitle">各変数の配点</div>
+        <table class="dt">
+          <tr><th>変数</th><th>カテゴリ</th><th>点数</th></tr>
+          <tr>
+            <td rowspan="2"><strong>初期リズム</strong></td>
+            <td>VF / pVT（Shockable）</td>
+            <td><span class="dd">0点</span></td>
+          </tr>
+          <tr>
+            <td>Non-shockable（PEA / Asystole）</td>
+            <td><span class="dd">3点</span></td>
+          </tr>
+          <tr>
+            <td rowspan="3"><strong>目撃 ＆ ROSC時間</strong></td>
+            <td>目撃あり・≤ 20分</td>
+            <td><span class="dd">0点</span></td>
+          </tr>
+          <tr>
+            <td>目撃あり・> 20分</td>
+            <td><span class="dd">4点</span></td>
+          </tr>
+          <tr>
+            <td>目撃なし</td>
+            <td><span class="dd">6点</span></td>
+          </tr>
+          <tr>
+            <td rowspan="3"><strong>動脈血 pH</strong></td>
+            <td>≥ 7.2</td>
+            <td><span class="dd">0点</span></td>
+          </tr>
+          <tr>
+            <td>7.0 ≤ pH &lt; 7.2</td>
+            <td><span class="dd">3点</span></td>
+          </tr>
+          <tr>
+            <td>&lt; 7.0</td>
+            <td><span class="dd">5点</span></td>
+          </tr>
+          <tr>
+            <td rowspan="3"><strong>乳酸値</strong></td>
+            <td>&lt; 5 mmol/L</td>
+            <td><span class="dd">0点</span></td>
+          </tr>
+          <tr>
+            <td>5–9.9 mmol/L</td>
+            <td><span class="dd">2点</span></td>
+          </tr>
+          <tr>
+            <td>≥ 10 mmol/L</td>
+            <td><span class="dd">4点</span></td>
+          </tr>
+          <tr>
+            <td rowspan="3"><strong>GCS 運動スコア</strong></td>
+            <td>M3–6（屈曲・払いのけ・命令に従う）</td>
+            <td><span class="dd">0点</span></td>
+          </tr>
+          <tr>
+            <td>M2（除皮質姿勢・異常屈曲）</td>
+            <td><span class="dd">1点</span></td>
+          </tr>
+          <tr>
+            <td>M1（無反応）</td>
+            <td><span class="dd">2点</span></td>
+          </tr>
+          <tr style="background:var(--accent-bg)">
+            <td colspan="2"><strong>合計スコア範囲</strong></td>
+            <td><span class="dd">0〜20点</span></td>
+          </tr>
+        </table>
+        <div class="alert info" style="margin-top:10px;margin-bottom:0">
+          <div class="atitle">出典</div>
+          Nishikimi M, et al. <em>Resuscitation</em> 2021; Kurata N, et al. <em>Resuscitation</em> 2021. 日本発・国際的に外部検証済みのスコア（SOS-KANTO, JAAM, 韓国, 台湾, 米国コホート）。
+        </div>
+      </div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge blue">Nishikimi 2021</span><span>Nishikimi M, et al. <em>Resuscitation.</em> 2021;158:42–48. — rCAST スコアの開発・外部検証（SOS KANTO 2017）：AUC 0.87〜0.88</span></div><div class="ref-item"><span class="rbadge green">IHCA 2024</span><span>Ogawa Y, et al. <em>Sci Rep.</em> 2024. — rCAST の IHCA への適用：AUC 0.88（30日不良神経転帰）</span></div><div class="ref-item"><span class="rbadge amber">ECPR 2024</span><span>SAVE-J II Study. <em>J Am Heart Assoc.</em> 2024. — ECPR患者へのCASTスコア検証：AUC 0.677（精度低下に注意）</span></div><div class="ref-item"><span class="rbadge gray">Korea 2022</span><span>External validation outside Japan (Taiwan): AUC 0.806（TTM施行OHCA患者）</span></div><div class="ref-item"><span class="rbadge gray">mCAST 2025</span><span>Modified rCAST（age＋脳幹反射追加）：AUC 0.849 vs 0.823（KORHN-PRO）</span></div></div>
+    </div>
+    </div>
+
+    <!-- ════════════════ PROGNOSIS ════════════════ -->
+    <div class="page" id="page-prog">
+      <div class="page-header"><div class="picon" style="background:var(--green-bg)">📊</div><div><div class="ptitle">生存率・予後データ</div><div class="psub">Evidence-based Survival Statistics</div></div></div>
+      <div class="g2">
+        <div class="card green">
+          <div class="ctitle">院外心停止（OHCA）生存退院率</div>
+          <div class="pitem"><div class="plabel">全体（EMS対応）</div><div class="pbarw"><div class="pbar" style="width:10%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div><div class="ppct">約 10%</div></div>
+          <div class="pitem"><div class="plabel">VF/pVT（目撃あり）</div><div class="pbarw"><div class="pbar" style="width:40%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div><div class="ppct">約 40%</div></div>
+          <div class="pitem"><div class="plabel">VF + Bystander CPR + AED</div><div class="pbarw"><div class="pbar" style="width:60%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div><div class="ppct">約 60%</div></div>
+          <div class="pitem"><div class="plabel">PEA（全体）</div><div class="pbarw"><div class="pbar" style="width:10%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div><div class="ppct">約 10%</div></div>
+          <div class="pitem"><div class="plabel">Asystole（全体）</div><div class="pbarw"><div class="pbar" style="width:3%;background:linear-gradient(90deg,#dc2626,#f87171)"></div></div><div class="ppct">&lt; 3%</div></div>
+        </div>
+        <div class="card blue">
+          <div class="ctitle">院内心停止（IHCA）生存退院率</div>
+          <div class="pitem"><div class="plabel">全体</div><div class="pbarw"><div class="pbar" style="width:25%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div><div class="ppct">約 25%</div></div>
+          <div class="pitem"><div class="plabel">VF/pVT</div><div class="pbarw"><div class="pbar" style="width:45%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div><div class="ppct">約 45%</div></div>
+          <div class="pitem"><div class="plabel">PEA</div><div class="pbarw"><div class="pbar" style="width:22%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div><div class="ppct">約 22%</div></div>
+          <div class="pitem"><div class="plabel">Asystole</div><div class="pbarw"><div class="pbar" style="width:8%;background:linear-gradient(90deg,#6b7280,#9ca3af)"></div></div><div class="ppct">約 8%</div></div>
+        </div>
+      </div>
+      <div class="g2 mt">
+        <div class="card green"><div class="ctitle">✅ 良好予後因子</div><div class="gap"><span class="tag green">VF/pVT</span><span class="tag green">目撃あり</span><span class="tag green">即時 Bystander CPR</span><span class="tag green">AED 早期</span><span class="tag green">若年</span><span class="tag green">院内（IHCA）</span><span class="tag green">CPR 15分以内 ROSC</span></div></div>
+        <div class="card red"><div class="ctitle">❌ 不良予後因子</div><div class="gap"><span class="tag red">Asystole</span><span class="tag red">目撃なし</span><span class="tag red">Bystander CPRなし</span><span class="tag red">高齢・多臓器不全</span><span class="tag red">CPR > 20分</span><span class="tag red">dBP &lt; 20mmHg（CPR中）</span></div></div>
+      </div>
+    </div>
+
+    <!-- ════════════════ CHECKLIST ════════════════ -->
+    <div class="page" id="page-ckl">
+      <div class="page-header"><div class="picon" style="background:var(--amber-bg)">📋</div><div><div class="ptitle">処置チェックリスト</div><div class="psub">蘇生〜ROSC後のタイムライン</div></div></div>
+      <div class="tabs">
+        <button class="tabbtn active" onclick="showTab(this,'ta')">心停止中</button>
+        <button class="tabbtn" onclick="showTab(this,'tb')">ROSC直後（0〜1h）</button>
+        <button class="tabbtn" onclick="showTab(this,'tc2')">ICU入室後（1〜24h）</button>
+        <button class="tabbtn" onclick="showTab(this,'td')">72時間以降</button>
+      </div>
+      <div class="tabcnt active" id="ta"><div class="card amber"><div class="ctitle">心停止中 — 必須アクション</div><div class="cklist">
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">高品質 CPR 開始（5–6cm・100–120回/分）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">除細動器装着・リズム確認</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">VF/pVT → 即時除細動（二相性150–200J）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">静脈路確保（末梢 or IO）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">アドレナリン 1mg IV：VF/pVTは2回目除細動後、PEA/Asystoleは早期に投与。以降3〜5分ごと反復</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">気管挿管 or BVM 換気（過換気禁止）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">EtCO₂ モニタリング装着</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">FAST 超音波（可逆的原因検索）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">4H4T 系統的に評価</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">ECPR 適応評価（VF/pVT → 15分でROSCなし）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">抵抗性VF → アミオダロン 300mg IV</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">2分ごとのリズム確認・CPR交代</div></label>
+      </div></div></div>
+      <div class="tabcnt" id="tb"><div class="card green"><div class="ctitle">ROSC直後 0〜1時間</div><div class="cklist">
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">12誘導心電図（STEMI確認）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">SpO₂ 94–98% に調整</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">PaCO₂ 35–45mmHg（過換気禁止）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">MAP ≥ 65mmHg 維持</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">TTM プロトコール開始</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">緊急採血（BGA・CBC・生化・凝固・Trop・BNP・Lac）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">尿道カテーテル留置</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">STEMI → 緊急 PCI</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">頭部 CT</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">ICU 転床調整</div></label>
+      </div></div></div>
+      <div class="tabcnt" id="tc2"><div class="card blue"><div class="ctitle">ICU入室後 1〜24時間</div><div class="cklist">
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">体温管理：目標体温到達確認・継続モニタリング</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">血糖 > 180mg/dL → インスリン開始（目標140–180）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">鎮静・鎮痛（Shivering 抑制）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">EEG モニタリング（発作活動検索）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">心エコー（左室機能・壁運動）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">NSE 採血（48〜72h 予定）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">早期経腸栄養を検討</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">DVT 予防</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">家族への病状説明・意思決定支援</div></label>
+      </div></div></div>
+      <div class="tabcnt" id="td"><div class="card purple"><div class="ctitle">72時間以降 — 神経学的評価フェーズ</div><div class="cklist">
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">TTM 終了 → 積極的復温（0.25〜0.5°C/時間）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">NSE（72h）：> 60μg/L は不良予後</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">SSEP（N20）評価</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">神経学的診察：対光反射・角膜反射・運動反応</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">頭部 MRI（DWI）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">EEG 最終評価</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">多職種カンファレンス（主治医・神経内科・ICU・家族）</div></label>
+        <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">目標設定・治療方針決定</div></label>
+      </div></div></div>
+    </div>
+
+    <!-- ════════════════ BRAIN DEATH ════════════════ -->
+    <div class="page" id="page-braindeath">
+      <div class="page-header">
+        <div class="picon" style="background:var(--surface3)">⚫</div>
+        <div>
+          <div class="ptitle">脳死判定プロトコール</div>
+          <div class="psub">法的脳死判定マニュアル 2024（厚生労働省・2025年3月施行）</div>
+        </div>
+      </div>
+
+      <div class="alert info">
+        <div class="atitle">📌 マニュアル2024 の位置づけ</div>
+        令和6年度「法的脳死判定マニュアル2024」は国際的コンセンサス「BD/DNC基準（2020年）」を反映した改訂版。ECMO装着患者への対応・小児基準の明確化・瞳孔評価困難例における脳血流検査の代替的適用・判定医の遠隔参加許可が注目点。 今後の法的脳死判定はこのマニュアルに準拠すること（令和7年3月27日付け厚生労働省事務連絡）。
+      </div>
+
+      <!-- STEP 0: 前提条件 -->
+      <div class="sh">前提条件（すべて満たすことが必要）</div>
+      <div class="g2">
+        <div class="card blue">
+          <div class="ctitle">器質的脳病変 ＆ 治療限界の確認</div>
+          <div class="cklist">
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">頭部 CT / MRI による器質的脳病変の確定診断（外傷性脳損傷・脳血管障害・低酸素性脳症など）</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">原疾患に対する最大限の治療（開頭減圧術・低体温療法など）を実施し、回復不能と判断</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">脳死と類似した状態の除外（急性薬物中毒・薬剤の影響・代謝性昏睡・低体温）</div></label>
+          </div>
+        </div>
+        <div class="card amber">
+          <div class="ctitle">薬剤・体温・施設の確認</div>
+          <div class="slist">
+            <div class="step"><div class="snum amber">!</div><div class="scont"><div class="stitle">薬物影響の除外</div><div class="sdesc">プロポフォール・BZD 使用例：血中濃度測定 または 半減期×5以上の休薬期間。筋弛緩薬：TOF モニタリングで除外。</div></div></div>
+            <div class="step"><div class="snum amber">!</div><div class="scont"><div class="stitle">深部体温の確認</div><div class="sdesc">6歳以上：≥ 32°C　／　6歳未満：≥ 35°C（腋窩温ではなく深部体温）</div></div></div>
+            <div class="step"><div class="snum amber">!</div><div class="scont"><div class="stitle">施設基準の確認</div><div class="sdesc">大学附属病院・救命救急センター・日本救急医学会指導医指定施設・日本脳神経外科学会基幹/連携施設・日本集中治療医学会認定集中治療施設 のいずれか</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 判定医 -->
+      <div class="sh mt">判定医の要件</div>
+      <div class="card blue">
+        <div class="ctitle">判定実施体制</div>
+        <div class="gap mt" style="margin-top:0">
+          <span class="tag blue">2名以上の専門医</span>
+          <span class="tag blue">救急医学 / 集中治療医学 / 神経内科 / 脳神経外科 認定医</span>
+          <span class="tag amber">移植に関わる医師は除外</span>
+          <span class="tag green">遠隔参加（2024年改訂で許可）</span>
+        </div>
+        <div class="alert warning" style="margin-top:10px;margin-bottom:0">
+          <div class="atitle">注意</div>
+          判定医のうち少なくとも1名は、脳死判定に経験を有する医師であること。移植チームの医師は判定に加わってはならない。
+        </div>
+      </div>
+
+      <!-- 7項目の判定基準 -->
+      <div class="sh mt">法的脳死判定 7項目</div>
+      <div class="g2">
+        <div class="card red">
+          <div class="ctitle">必須確認項目（すべて陽性で脳死）</div>
+          <div class="slist">
+            <div class="step">
+              <div class="snum red">Ⅰ</div>
+              <div class="scont">
+                <div class="stitle">深昏睡（JCS 300 / GCS 3）</div>
+                <div class="sdesc">顔面への痛覚刺激（眼窩上切痕圧迫・爪楊枝）に対して、まったく顔をしかめたり体動が見られないこと。<br><strong>注意</strong>：除脳硬直・全身性痙攣を認めた場合は判定中止。脊髄自動運動（ラザロ徴候・三重屈曲反射）は脳死下でも生じうる。</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="snum red">Ⅱ</div>
+              <div class="scont">
+                <div class="stitle">瞳孔散大固定（≥ 4mm、両側）</div>
+                <div class="sdesc">直径 4mm 以上かつ両側固定。眼球損傷等で確認不能な場合は脳血流検査（CTA・SPECT・DSA）で補完。</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="snum red">Ⅲ</div>
+              <div class="scont">
+                <div class="stitle">脳幹反射の消失（7項目）</div>
+                <div class="sdesc">
+                  ① 対光反射　② 角膜反射　③ 毛様脊髄反射<br>
+                  ④ 眼球頭反射（人形の目現象）　⑤ 前庭反射（温度眼振）<br>
+                  ⑥ 咽頭反射　⑦ 咳反射<br>
+                  <span class="tag red" style="margin-top:4px;display:inline-block">すべて消失で陽性</span>
+                  <span class="tag amber" style="margin-top:4px;display:inline-block">評価不能項目は脳血流検査で補完</span>
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="snum red">Ⅳ</div>
+              <div class="scont">
+                <div class="stitle">平坦脳波（ECI：電気的無活動）</div>
+                <div class="sdesc">高感度記録（感度 2μV/mm 以上）で 30分以上記録。<br>脳波計の故障や電極接触不良でないことを確認。</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="snum red">Ⅴ</div>
+              <div class="scont">
+                <div class="stitle">自発呼吸の消失（無呼吸テスト）</div>
+                <div class="sdesc">
+                  PaCO₂ ≥ 60 mmHg でも自発呼吸が出現しないことを確認。<br>
+                  <strong>通常手順：</strong>100% O₂ を 10分前投与 → 人工呼吸器から切り離し → 10分間観察<br>
+                  <strong>ECMO手順（2024年改訂）：</strong>Sweep gas を 0.5–1 L/min に制限し CO₂ 蓄積。右橈骨動脈と人工肺後方の 2箇所で PaCO₂ ≥ 60 mmHg を確認。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card gray">
+            <div class="ctitle">補助検査（評価不能時の代替）</div>
+            <div class="slist">
+              <div class="step"><div class="snum" style="background:var(--text-muted);color:#fff;font-size:10px">CTA</div><div class="scont"><div class="stitle">CT アンギオグラフィ</div><div class="sdesc">遅延相で内頸動脈サイフォン部以遠の血流消失を確認。<strong>第一選択</strong>。</div></div></div>
+              <div class="step"><div class="snum" style="background:var(--text-muted);color:#fff;font-size:10px">SPECT</div><div class="scont"><div class="stitle">脳血流シンチグラフィ</div><div class="sdesc">"Empty skull sign"（頭蓋内放射性トレーサー集積欠如）を確認。</div></div></div>
+              <div class="step"><div class="snum" style="background:var(--text-muted);color:#fff;font-size:10px">DSA</div><div class="scont"><div class="stitle">脳血管造影（ゴールドスタンダード）</div><div class="sdesc">侵襲性あり。上記が困難な場合に限り使用。</div></div></div>
+            </div>
+            <div class="alert info" style="margin-top:10px;margin-bottom:0">
+              <div class="atitle">2024年改訂ポイント</div>
+              脳血流検査は必須項目から<strong>除外</strong>。瞳孔評価不能例・脳幹反射の一部評価困難例にのみ適用。
+            </div>
+          </div>
+
+          <div class="card amber mt" style="overflow-x:auto">
+            <div class="ctitle">判定の回数・間隔</div>
+            <table class="dt">
+              <tr><th>対象</th><th>判定回数</th><th>間隔</th><th>死亡時刻</th></tr>
+              <tr><td>6歳以上（成人含む）</td><td>2回</td><td><span class="dd">6時間以上</span></td><td>2回目終了時</td></tr>
+              <tr><td>生後12週〜6歳未満</td><td>2回</td><td><span class="dd">24時間以上</span></td><td>2回目終了時</td></tr>
+              <tr><td>生後12週未満</td><td colspan="3" style="color:var(--red)">判定対象外（在胎40週以上から適用）</td></tr>
+            </table>
+          </div>
+
+          <div class="card red mt">
+            <div class="ctitle">小児の特別要件（6歳未満）</div>
+            <div class="slist">
+              <div class="step"><div class="snum red">!</div><div class="scont"><div class="stitle">血圧基準の確認</div><div class="sdesc">収縮期血圧 ≥（年齢×2）+ 65 mmHg（1〜13歳）を維持していること。</div></div></div>
+              <div class="step"><div class="snum red">!</div><div class="scont"><div class="stitle">虐待の除外</div><div class="sdesc">18歳未満の外因性脳損傷例：児童相談所の虐待調査終了が前提。警察への事前連絡を推奨。</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 脳死と紛らわしい状態 -->
+      <div class="sh mt">脳死と類似しうる状態（判定前に除外）</div>
+      <div class="card amber">
+        <div class="gap">
+          <span class="tag red">急性薬物中毒</span>
+          <span class="tag red">脳死判定に影響する薬物投与中</span>
+          <span class="tag amber">代謝性昏睡（低血糖・電解質異常）</span>
+          <span class="tag amber">低体温（深部体温 &lt; 32°C）</span>
+          <span class="tag amber">ロックドイン症候群</span>
+          <span class="tag amber">ギラン・バレー症候群（重症）</span>
+        </div>
+        <div class="alert danger" style="margin-top:10px;margin-bottom:0">
+          <div class="atitle">⚠️ 判定中止の絶対基準</div>
+          除脳硬直・全身性痙攣を認めた場合、または深部体温が基準値未満の場合は脳死判定を中止すること。
+        </div>
+      </div>
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge blue">厚労省 2025</span><span>法的脳死判定マニュアル2024（令和6年度厚生労働科学研究）. <em>日本集中治療医学会誌.</em> 2025;32:S1. J-Stage公開2025年3月. 厚労省事務連絡 令和7年3月27日付.</span></div><div class="ref-item"><span class="rbadge gray">BD/DNC 2020</span><span>Greer DM, et al. Evidence-Based Guideline: Brain Death/Death by Neurological Criteria. <em>Neurology.</em> 2023. — 国際コンセンサス（マニュアル2024が参照）</span></div><div class="ref-item"><span class="rbadge gray">臓器移植法</span><span>臓器の移植に関する法律第6条（法的脳死判定の法的根拠）・同施行規則</span></div></div>
+    </div>
+    </div>
+
+    <!-- ════════════════ TRANSPLANT ════════════════ -->
+    <div class="page" id="page-transplant">
+      <div class="page-header">
+        <div class="picon" style="background:var(--green-bg)">🌿</div>
+        <div>
+          <div class="ptitle">臓器提供フロー（脳死下）</div>
+          <div class="psub">日本臓器移植ネットワーク（JOT）・改正臓器移植法 準拠</div>
+        </div>
+      </div>
+
+      <div class="alert info">
+        <div class="atitle">📌 法的根拠（改正臓器移植法 2010年施行）</div>
+        本人の臓器提供の意思が<strong>不明な場合でも、家族の承諾があれば</strong>脳死下の臓器提供が可能。15歳未満からの提供も可能。本人が書面で拒否を表示している場合は提供不可。
+      </div>
+
+      <!-- フロー -->
+      <div class="sh">臓器提供の流れ</div>
+      <div class="g2">
+        <div class="card green">
+          <div class="ctitle">ステップフロー（JOT 公式手順）</div>
+          <div class="flow">
+            <div class="fbox" style="background:var(--surface3);border-color:var(--border2)">
+              <strong>STEP 1</strong>：「脳死とされうる状態」の診断<br>
+              <small style="color:var(--text-muted)">主治医が臨床的に脳死の可能性を判断</small>
+            </div>
+            <div class="farr">↓</div>
+            <div class="fbox famber">
+              <strong>STEP 2</strong>：家族への病状説明<br>
+              <small>「脳死とされうる状態」であることを説明。この時点で臓器提供を<strong>選択肢として情報提供</strong>することが推奨される（入院時重症患者対応メディエーター）</small>
+            </div>
+            <div class="farr">↓</div>
+            <div class="fbox fblue">
+              <strong>STEP 3</strong>：JOT へ連絡<br>
+              <small>家族から「臓器提供について詳しく聴きたい」との申し出 → 主治医から JOT へ連絡 → <strong>JOT コーディネーターが派遣</strong>され詳細説明</small>
+            </div>
+            <div class="farr">↓</div>
+            <div class="fbox">
+              <strong>STEP 4</strong>：家族の意思決定<br>
+              <small style="color:var(--text-muted)">家族が十分に話し合い「総意」として決定。提供しないと判断しても不利益な扱いは受けない。</small>
+            </div>
+            <div class="farr">↓</div>
+            <div class="fbox fred">
+              <strong>STEP 5</strong>：法的脳死判定（1回目）<br>
+              <small>判定医 2名以上。7項目の確認。</small>
+            </div>
+            <div class="farr">↓ 6時間以上（小児 24h）</div>
+            <div class="fbox fred">
+              <strong>STEP 6</strong>：法的脳死判定（2回目）<br>
+              <small>2回目終了時刻が法的死亡時刻となる</small>
+            </div>
+            <div class="farr">↓</div>
+            <div class="fbox fgreen">
+              <strong>STEP 7</strong>：レシピエント選択 → 臓器摘出手術（3〜5時間）<br>
+              <small>JOT が移植希望者の中から医学的に最適な候補をコンピューターで公平に選定</small>
+            </div>
+            <div class="farr">↓</div>
+            <div class="fbox fgreen">
+              <strong>STEP 8</strong>：ご遺体のお戻し<br>
+              <small>創はきれいに縫合。通夜・葬儀に間に合うよう配慮。</small>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- 意思確認 -->
+          <div class="card blue">
+            <div class="ctitle">本人の意思確認 3パターン</div>
+            <div class="slist">
+              <div class="step">
+                <div class="snum green">A</div>
+                <div class="scont">
+                  <div class="stitle">提供意思あり（書面・カード・免許証・マイナンバー等）</div>
+                  <div class="sdesc">本人の意思が最優先。家族が拒否しても提供可能（ただし慣例的に家族の意向も尊重）。</div>
+                </div>
+              </div>
+              <div class="step">
+                <div class="snum amber">B</div>
+                <div class="scont">
+                  <div class="stitle">意思不明（意思表示なし）</div>
+                  <div class="sdesc"><strong>家族の承諾があれば提供可能</strong>（2010年改正法）。家族全員の総意が求められる。</div>
+                </div>
+              </div>
+              <div class="step">
+                <div class="snum red">C</div>
+                <div class="scont">
+                  <div class="stitle">拒否意思あり（書面で提供拒否）</div>
+                  <div class="sdesc">家族が希望しても臓器提供は<strong>不可</strong>。本人の意思が絶対的に優先される。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 提供可能臓器 -->
+          <div class="card purple mt">
+            <div class="ctitle">脳死下で提供可能な臓器（6種）</div>
+            <div class="gap">
+              <span class="tag red">心臓</span>
+              <span class="tag blue">肺（片肺・両肺）</span>
+              <span class="tag amber">肝臓</span>
+              <span class="tag green">腎臓（左右）</span>
+              <span class="tag cyan">膵臓</span>
+              <span class="tag purple">小腸</span>
+            </div>
+            <div class="alert info" style="margin-top:10px;margin-bottom:0">
+              <div class="atitle">眼球（角膜）について</div>
+              眼球のみ地域アイバンクが対応。心停止後の提供も可能。JOT を通さず別途手続き。
+            </div>
+          </div>
+
+          <!-- 施設条件 -->
+          <div class="card amber mt">
+            <div class="ctitle">脳死下提供が可能な施設（5類型）</div>
+            <div class="slist">
+              <div class="step" style="padding:8px"><div class="snum" style="background:var(--text-muted);color:#fff;font-size:11px;width:22px;height:22px">1</div><div class="scont"><div class="sdesc">大学附属病院</div></div></div>
+              <div class="step" style="padding:8px"><div class="snum" style="background:var(--text-muted);color:#fff;font-size:11px;width:22px;height:22px">2</div><div class="scont"><div class="sdesc">日本救急医学会 指導医指定施設</div></div></div>
+              <div class="step" style="padding:8px"><div class="snum" style="background:var(--text-muted);color:#fff;font-size:11px;width:22px;height:22px">3</div><div class="scont"><div class="sdesc">日本脳神経外科学会 基幹施設または連携施設</div></div></div>
+              <div class="step" style="padding:8px"><div class="snum" style="background:var(--text-muted);color:#fff;font-size:11px;width:22px;height:22px">4</div><div class="scont"><div class="sdesc">救命救急センターとして認定された施設</div></div></div>
+              <div class="step" style="padding:8px"><div class="snum" style="background:var(--text-muted);color:#fff;font-size:11px;width:22px;height:22px">5</div><div class="scont"><div class="sdesc">日本小児総合医療施設協議会 会員施設</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 家族説明 -->
+      <div class="sh mt">家族説明のポイント（臓器提供に関して）</div>
+      <div class="g2">
+        <div class="card blue">
+          <div class="ctitle">説明に含めるべき内容</div>
+          <div class="cklist">
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">現在の状態が「脳死とされうる状態」であること</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">脳死は法律上の死亡であり、心臓死とは異なること</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">臓器提供は選択肢のひとつであり、提供しなくても不利益はないこと</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">本人が意思を示していた場合、その内容（カード・健康保険証・免許証等）を確認</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">希望があれば JOT コーディネーターを呼んで詳しい説明を受けられること</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">脳死判定に家族が立ち会うことができること</div></label>
+            <label class="ckitem" onclick="tc(this)"><div class="ckbox"></div><div class="cktxt">摘出後は創をきれいに縫合し、通夜・葬儀に間に合うよう遺体を家族に戻すこと</div></label>
+          </div>
+        </div>
+        <div class="card red">
+          <div class="ctitle">説明時の注意点</div>
+          <div class="slist">
+            <div class="step"><div class="snum red">!</div><div class="scont"><div class="stitle">強制・誘導はしない</div><div class="sdesc">「提供してほしい」などの発言は絶対に避ける。中立な立場で情報提供のみ行う。</div></div></div>
+            <div class="step"><div class="snum red">!</div><div class="scont"><div class="stitle">急かさない</div><div class="sdesc">家族が話し合うための十分な時間を与える。決断を急かさないこと。</div></div></div>
+            <div class="step"><div class="snum red">!</div><div class="scont"><div class="stitle">「脳死 ＝ 死」の説明のタイミング</div><div class="sdesc">脳死判定の前に「脳死は法律上の死」であることを丁寧に説明する。判定後に初めて知るのは家族にとって大きな混乱につながる。</div></div></div>
+            <div class="step"><div class="snum amber">注</div><div class="scont"><div class="stitle">虐待が疑われる小児例</div><div class="sdesc">18歳未満の外因性脳損傷：臓器提供の前に児童相談所の虐待調査終了が前提。警察への事前連絡を行うこと（法的脳死判定マニュアル 2024）。</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOT連絡先 -->
+      <div class="sh mt">JOT への連絡</div>
+      <div class="card green">
+        <div class="ctitle">日本臓器移植ネットワーク（JOT）連絡先</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px">
+          <div style="background:var(--surface2);border:1px solid var(--green-border);border-radius:8px;padding:12px 18px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-bottom:4px">24時間対応（臓器提供相談）</div>
+            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--green)">0120-22-0149</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 18px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-bottom:4px">Web</div>
+            <div style="font-size:13px;color:var(--accent)">www.jotnw.or.jp</div>
+          </div>
+        </div>
+        <div class="alert success" style="margin-top:12px;margin-bottom:0">
+          <div class="atitle">✅ 実務上のポイント</div>
+          JOT コーディネーターは 24時間 365日対応。「臓器提供の可能性がある」と判断した時点で早期に連絡することで、スムーズな対応が可能になる。施設として経験がなくても JOT が全面的にサポートする。
+        </div>
+      </div>
+    </div>
+
+
+    <div class="ref-block">
+      <div class="ref-title">📚 参照ガイドライン・根拠文献</div>
+      <div class="ref-list"><div class="ref-item"><span class="rbadge blue">JOT</span><span>公益社団法人 日本臓器移植ネットワーク（JOT）臓器提供の流れ. www.jotnw.or.jp</span></div><div class="ref-item"><span class="rbadge green">臓器移植法 2010</span><span>改正臓器移植法（平成22年7月17日全面施行）：本人意思不明の場合も家族承諾で提供可。15歳未満も可。</span></div><div class="ref-item"><span class="rbadge gray">厚労省ガイドライン</span><span>臓器の移植に関する法律の運用に関する指針（ガイドライン）. 厚生省保健医療局長通知（平成9年）及び改正版</span></div></div>
+    </div>
+  </div><!-- /main-content -->
+</div><!-- /app-body -->
+
+<script>
+// ══════════ TIMER ══════════
+let sec=0, tint=null, running=false;
+const pad=n=>String(n).padStart(2,'0');
+
+function render(){
+  const m=Math.floor(sec/60),s=sec%60;
+  const el=document.getElementById('tdisp');
+  el.textContent=pad(m)+':'+pad(s);
+  el.className='tdisp'+(running?' running':'')+(sec>=1200?' warn':'');
+}
+function startTimer(){
+  if(running)return;
+  running=true;
+  document.getElementById('btnStart').textContent='▶ 計測中';
+  document.getElementById('btnStart').disabled=true;
+  tint=setInterval(()=>{sec++;render();},1000);
+}
+function pauseTimer(){
+  if(!running)return;
+  running=false;
+  clearInterval(tint);
+  const b=document.getElementById('btnStart');
+  b.textContent='▶ 再開'; b.disabled=false;
+  render();
+}
+function resetTimer(){
+  pauseTimer(); sec=0;
+  document.getElementById('offM').value='0';
+  document.getElementById('offS').value='0';
+  const b=document.getElementById('btnStart');
+  b.textContent='▶ 開始'; b.disabled=false;
+  render();
+}
+function applyOffset(){
+  const m=parseInt(document.getElementById('offM').value)||0;
+  const s=parseInt(document.getElementById('offS').value)||0;
+  const wasRunning=running;
+  if(wasRunning)pauseTimer();
+  sec=m*60+s; render();
+  const btn=document.getElementById('btnApply');
+  btn.textContent='✓ 設定済'; btn.style.background='#16a34a';
+  setTimeout(()=>{btn.textContent='設定';btn.style.background='';},2000);
+}
+
+// ══════════ DRAWER (MOBILE) ══════════
+function isMobile(){ return window.innerWidth <= 768; }
+
+function toggleDrawer(){
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('drawerOverlay');
+  const isOpen = s.classList.contains('open');
+  if(isOpen){ closeDrawer(); } else { openDrawer(); }
+}
+function openDrawer(){
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('drawerOverlay');
+  s.classList.add('open');
+  o.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer(){
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('drawerOverlay');
+  s.classList.remove('open');
+  o.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function initMobileUI(){
+  const menuBtn = document.getElementById('menuBtn');
+  const closeRow = document.getElementById('sidebarCloseRow');
+  if(isMobile()){
+    if(menuBtn) menuBtn.style.display = 'flex';
+    if(closeRow) closeRow.style.display = 'block';
+  } else {
+    if(menuBtn) menuBtn.style.display = 'none';
+    if(closeRow) closeRow.style.display = 'none';
+    closeDrawer();
+  }
+}
+window.addEventListener('resize', initMobileUI);
+document.addEventListener('DOMContentLoaded', initMobileUI);
+window.addEventListener('load', initMobileUI);
+
+// ══════════ NAV ══════════
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(id==='flowrosc' && Object.keys(rfState).length===0) rfInit();
+  // モバイルではページ選択後にドロワーを閉じる
+  if(isMobile()) closeDrawer();
+  // ページトップにスクロール
+  window.scrollTo(0,0);
+}
+
+// ══════════ RHYTHM ══════════
+function selRhythm(r){
+  ['vf','pea','asy'].forEach(x=>{
+    document.getElementById('r'+x).style.display='none';
+    document.getElementById('b'+x).className='rhbtn';
+  });
+  document.getElementById('r'+r).style.display='block';
+  const map={vf:'svf',pea:'spea',asy:'sasy'};
+  document.getElementById('b'+r).className='rhbtn '+map[r];
+}
+
+// ══════════ CHECKLIST ══════════
+function tc(el){el.classList.toggle('chk');}
+
+// ══════════ TABS ══════════
+function showTab(btn,id){
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tabcnt').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// ROSC GUIDED FLOW
+// ══════════════════════════════════════════
+const RF_STEPS = [
+  {
+    id: 'consciousness',
+    title: 'STEP 1　意識・神経学的状態',
+    icon: '🧠',
+    color: 'var(--accent)',
+    bg: 'var(--accent-bg)',
+    immediate: [
+      '気道確保・酸素投与（SpO₂ 94–98% を目標）',
+      '血圧・心拍数・体温をモニタリング開始',
+      'EtCO₂ モニタリング継続',
+    ],
+    question: 'ROSC後の意識レベルは？',
+    options: [
+      { val: 'awake',   label: '意識清明・呼びかけに応じる（GCS ≥ 13）',  color: 'green' },
+      { val: 'drowsy',  label: '傾眠〜混迷（GCS 9–12）',                    color: 'amber' },
+      { val: 'coma',    label: '昏睡（GCS ≤ 8）',                          color: 'red'   },
+    ],
+  },
+  {
+    id: 'ecg',
+    title: 'STEP 2　12誘導心電図',
+    icon: '📈',
+    color: 'var(--pink)',
+    bg: 'var(--pink-bg)',
+    immediate: [
+      '12誘導心電図を直ちに記録する',
+      'ST変化・新規 LBBB・QTc 延長を確認',
+      'モニター心電図を継続装着',
+    ],
+    question: 'ST変化の有無は？',
+    options: [
+      { val: 'stemi',    label: 'STEMI（ST上昇あり） または 新規 LBBB',  color: 'red'   },
+      { val: 'nonstemi', label: 'ST上昇なし（ST低下・T波変化を含む）',    color: 'amber' },
+      { val: 'normal',   label: '心電図 正常範囲',                        color: 'green' },
+    ],
+  },
+  {
+    id: 'bp',
+    title: 'STEP 3　血行動態・循環',
+    icon: '🫀',
+    color: 'var(--red)',
+    bg: 'var(--red-bg)',
+    immediate: [
+      '収縮期血圧・MAP を確認（目標 MAP ≥ 65 mmHg）',
+      '動脈ライン確保（可能なら）',
+      'FAST 超音波で左室壁運動・心嚢液を確認',
+    ],
+    question: '血行動態の状態は？',
+    options: [
+      { val: 'stable',    label: '安定（MAP ≥ 65 mmHg、昇圧剤不要）',              color: 'green' },
+      { val: 'vaso',      label: '昇圧剤が必要（MAP < 65 mmHg）',                  color: 'amber' },
+      { val: 'refractory',label: '難治性ショック（昇圧剤増量でも MAP 維持困難）', color: 'red'   },
+    ],
+  },
+  {
+    id: 'labs',
+    title: 'STEP 4　緊急検査',
+    icon: '🧪',
+    color: 'var(--cyan)',
+    bg: 'var(--cyan-bg)',
+    immediate: [
+      '動脈血ガス（BGA）：pH・PaO₂・PaCO₂・Lac',
+      '血液検査：CBC・BMP・凝固・Trop I/T・BNP・Lac',
+      '頭部 CT（脳卒中・頭蓋内出血の除外）',
+    ],
+    question: '乳酸値（Lactate）は？',
+    options: [
+      { val: 'lac_low',  label: '< 5 mmol/L',        color: 'green' },
+      { val: 'lac_mid',  label: '5–9.9 mmol/L',       color: 'amber' },
+      { val: 'lac_high', label: '≥ 10 mmol/L',        color: 'red'   },
+    ],
+  },
+  {
+    id: 'ttm_decision',
+    title: 'STEP 5　体温管理療法（TTM）の判断',
+    icon: '🌡️',
+    color: 'var(--cyan)',
+    bg: 'var(--cyan-bg)',
+    immediate: [
+      '昏睡状態（GCS ≤ 8）の場合は TTM を開始する',
+      '目標体温：32〜37.5°C（≥ 24時間維持）',
+      '発熱（> 37.5°C）は 72時間以上積極的に予防',
+    ],
+    question: 'TTM の適応・判断は？',
+    options: [
+      { val: 'ttm_yes',   label: 'TTM 開始する（昏睡状態）',               color: 'blue'  },
+      { val: 'ttm_no',    label: 'TTM 非適応（意識清明・自発呼吸あり）',   color: 'green' },
+      { val: 'ttm_pend',  label: '検討中（神経学的評価を継続中）',          color: 'amber' },
+    ],
+  },
+  {
+    id: 'cause',
+    title: 'STEP 6　心停止の推定原因',
+    icon: '🔍',
+    color: 'var(--purple)',
+    bg: 'var(--purple-bg)',
+    immediate: [
+      '初期リズム・病歴・状況から原因を推定する',
+      'FAST 超音波による補助診断',
+      '可逆的原因（4H4T）が残っていないか再確認',
+    ],
+    question: '最も疑われる原因は？',
+    options: [
+      { val: 'acs',      label: '急性冠症候群（ACS）',       color: 'red'    },
+      { val: 'arrhythmia',label: '不整脈（原発性 VF 等）',   color: 'amber'  },
+      { val: 'pe',       label: '肺塞栓（PE）',              color: 'purple' },
+      { val: 'respiratory',label: '呼吸器疾患・窒息・溺水', color: 'cyan'   },
+      { val: 'other',    label: 'その他・不明',               color: 'gray'   },
+    ],
+  },
+  {
+    id: 'disposition',
+    title: 'STEP 7　ICU転床・引き継ぎ',
+    icon: '🏥',
+    color: 'var(--amber)',
+    bg: 'var(--amber-bg)',
+    immediate: [
+      '循環器内科・ICU チームへの引き継ぎを行う',
+      '家族への初回説明（蘇生成功・現在の状態・今後の方針）',
+      '入院同意書・家族連絡先の確認',
+    ],
+    question: '転床・引き継ぎ先は？',
+    options: [
+      { val: 'ccu',   label: 'CCU / 循環器 ICU',   color: 'red'   },
+      { val: 'icu',   label: '総合 ICU',             color: 'blue'  },
+      { val: 'cath',  label: 'カテ室（緊急 PCI）',  color: 'pink'  },
+      { val: 'other_disp', label: 'その他',          color: 'gray'  },
+    ],
+  },
+];
+
+// state
+let rfState = {};
+let rfCurrentStep = 0;
+
+function rfInit() {
+  rfState = {};
+  rfCurrentStep = 0;
+  renderRfStep(0);
+  document.getElementById('rf-summary').style.display = 'none';
+  rfUpdateProgress();
+}
+
+function rfReset() {
+  if (!confirm('入力内容をリセットしますか？')) return;
+  rfInit();
+}
+
+function renderRfStep(stepIdx) {
+  const container = document.getElementById('rf-steps-container');
+  const step = RF_STEPS[stepIdx];
+  if (!step) return;
+
+  const prevAnswers = Object.keys(rfState).map(k => {
+    const s = RF_STEPS.find(x => x.id === k);
+    if (!s) return '';
+    const opt = s.options.find(o => o.val === rfState[k]);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border-radius:7px;border:1px solid var(--border);margin-bottom:5px;font-size:12px;color:var(--text-dim)">
+      <span>${s.icon}</span>
+      <span style="font-weight:700;color:var(--text-muted);min-width:120px">${s.title.split('　')[1]}</span>
+      <span class="tag ${opt ? opt.color : 'gray'}" style="font-size:11px">${opt ? opt.label : ''}</span>
+      <button onclick="rfEditStep('${k}')" style="margin-left:auto;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:10px;color:var(--text-muted)">修正</button>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    ${prevAnswers ? `<div style="margin-bottom:16px">${prevAnswers}</div>` : ''}
+    <div class="card" style="border-color:${step.color};background:${step.bg};border-width:2px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="font-size:22px">${step.icon}</span>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em">${step.title.split('　')[0]}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">${step.title.split('　')[1]}</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px">⚡ 今すぐやること</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${step.immediate.map(t => `
+            <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:rgba(255,255,255,.7);border-radius:6px;border:1px solid rgba(0,0,0,.07);font-size:13px;color:var(--text-dim)">
+              <span style="color:${step.color};font-size:14px;flex-shrink:0;margin-top:1px">→</span>
+              <span>${t}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border-radius:8px;padding:14px;border:1px solid ${step.color}30">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">❓ ${step.question}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${step.options.map(opt => `
+            <button class="rf-opt-btn" data-step="${step.id}" data-val="${opt.val}" data-color="${opt.color}"
+              onclick="rfSelectOption('${step.id}','${opt.val}','${opt.color}',this)"
+              style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;text-align:left;font-size:13px;font-family:var(--sans);transition:all .15s;color:var(--text-dim)">
+              <span style="width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .15s" class="rf-dot"></span>
+              ${opt.label}
+            </button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function rfEditStep(stepId) {
+  const idx = RF_STEPS.findIndex(s => s.id === stepId);
+  if (idx < 0) return;
+  // Remove answers from this step onwards
+  const toRemove = RF_STEPS.slice(idx).map(s => s.id);
+  toRemove.forEach(k => delete rfState[k]);
+  rfCurrentStep = idx;
+  document.getElementById('rf-summary').style.display = 'none';
+  renderRfStep(idx);
+  rfUpdateProgress();
+}
+
+function rfSelectOption(stepId, val, color, btnEl) {
+  // Visual feedback
+  btnEl.closest('.card').querySelectorAll('.rf-opt-btn').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.background = 'var(--surface2)';
+    b.style.color = 'var(--text-dim)';
+    b.querySelector('.rf-dot').style.background = 'var(--border)';
+  });
+  const colorMap = { red:'var(--red)', green:'var(--green)', amber:'var(--amber)', blue:'var(--accent)', purple:'var(--purple)', cyan:'var(--cyan)', pink:'var(--pink)', gray:'var(--text-muted)' };
+  const c = colorMap[color] || 'var(--accent)';
+  btnEl.style.borderColor = c;
+  btnEl.style.background = c + '18';
+  btnEl.style.color = 'var(--text)';
+  btnEl.querySelector('.rf-dot').style.background = c;
+
+  rfState[stepId] = val;
+
+  setTimeout(() => {
+    rfCurrentStep = RF_STEPS.findIndex(s => s.id === stepId) + 1;
+    rfUpdateProgress();
+    if (rfCurrentStep >= RF_STEPS.length) {
+      renderRfSummary();
+    } else {
+      renderRfStep(rfCurrentStep);
+      // scroll to new step
+      setTimeout(() => {
+        const el = document.getElementById('rf-steps-container');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
+  }, 400);
+}
+
+function rfUpdateProgress() {
+  const total = RF_STEPS.length;
+  const done = rfCurrentStep;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('rf-progress-bar').style.width = Math.max(pct, 5) + '%';
+  document.getElementById('rf-progress-label').textContent =
+    done >= total ? '完了 ✓' : `STEP ${done + 1} / ${total}`;
+
+  // dots
+  const dots = document.getElementById('rf-step-dots');
+  dots.innerHTML = RF_STEPS.map((s, i) =>
+    `<span title="${s.title}" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${
+      i < done ? 'var(--green)' : i === done ? 'var(--accent)' : 'var(--border)'
+    };transition:background .3s"></span>`
+  ).join('');
+}
+
+function renderRfSummary() {
+  document.getElementById('rf-steps-container').innerHTML = RF_STEPS.map(s => {
+    const opt = s.options.find(o => o.val === rfState[s.id]);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 11px;background:var(--surface2);border-radius:7px;border:1px solid var(--border);margin-bottom:5px;font-size:12px;color:var(--text-dim)">
+      <span>${s.icon}</span>
+      <span style="font-weight:700;color:var(--text-muted);min-width:120px">${s.title.split('　')[1]}</span>
+      <span class="tag ${opt ? opt.color : 'gray'}" style="font-size:11px">${opt ? opt.label : '—'}</span>
+      <button onclick="rfEditStep('${s.id}')" style="margin-left:auto;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:10px;color:var(--text-muted)">修正</button>
+    </div>`;
+  }).join('');
+
+  // Build summary
+  const s = rfState;
+  const summary = rfBuildSummary(s);
+
+  const el = document.getElementById('rf-summary');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="margin-top:22px;border-top:2px solid var(--green);padding-top:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <span style="font-size:24px">📋</span>
+        <div>
+          <div style="font-family:var(--serif);font-size:18px;color:var(--text)">この症例の入院後プラン</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em">症例情報に基づいて自動生成されたガイドです</div>
+        </div>
+      </div>
+      ${summary}
+      <div class="alert warning" style="margin-top:16px">
+        <div class="atitle">⚠️ 免責事項</div>
+        このサマリーは入力情報に基づく参考ガイドです。最終的な臨床判断は担当医が行ってください。各項目の詳細は左メニューの各専門ページを参照してください。
+      </div>
+    </div>`;
+
+  setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+}
+
+function rfBuildSummary(s) {
+  const sections = [];
+
+  // ── 1. 緊急対応（最初の数時間）──────────────────────
+  const urgent = [];
+
+  if (s.ecg === 'stemi') {
+    urgent.push({ color: 'red', text: '<strong>緊急 PCI 適応</strong>：STEMI または 新規 LBBB あり。循環器内科に緊急連絡し、直ちにカテ室へ搬送する。意識の有無に関わらず施行を検討。' });
+  } else if (s.ecg === 'nonstemi') {
+    urgent.push({ color: 'amber', text: 'ST上昇なし。TOMAHAWK・COACT試験の結果から<strong>常規緊急 CAG は推奨されない</strong>。ただし胸痛先行・Trop急上昇・難治性VFなど ACS を強く示唆する所見があれば個別に検討。' });
+  }
+
+  if (s.bp === 'refractory') {
+    urgent.push({ color: 'red', text: '<strong>難治性ショック</strong>：ノルアドレナリン増量 ＋ ドブタミン併用を検討。IABP / Impella 補助循環の適応を早急に評価。ECMO サポートも検討。' });
+  } else if (s.bp === 'vaso') {
+    urgent.push({ color: 'amber', text: '昇圧剤必要：<strong>ノルアドレナリン 0.1γ〜</strong> を開始し MAP ≥ 65 mmHg を目標に調整。心機能低下合併ならドブタミン 2〜5γ 追加を検討。' });
+  }
+
+  if (s.consciousness === 'coma') {
+    urgent.push({ color: 'blue', text: '<strong>気道管理の確認</strong>：昏睡状態のため気管挿管を維持。鎮静・鎮痛プロトコールを開始。過換気（PaCO₂ < 35mmHg）に注意。' });
+  }
+
+  if (s.labs === 'lac_high') {
+    urgent.push({ color: 'red', text: '乳酸値 ≥ 10 mmol/L：高度の組織低酸素を示唆。循環改善と輸液療法を積極的に行い、1〜2時間後に再評価。可逆的原因（緊張性気胸・心タンポナーデ・PE）を再確認。' });
+  } else if (s.labs === 'lac_mid') {
+    urgent.push({ color: 'amber', text: '乳酸値 5–9.9 mmol/L：循環不安定の可能性。初期輸液・昇圧剤の効果を 1〜2時間後に再評価。乳酸のクリアランス（≥ 10%/2h）を確認。' });
+  }
+
+  sections.push({
+    title: '🚨 緊急対応（直後〜1時間）',
+    color: 'red',
+    items: urgent.length ? urgent : [{ color: 'green', text: '緊急介入が必要な所見は現時点で明らかではありません。下記の入院後管理に移行してください。' }],
+  });
+
+  // ── 2. 入院後治療計画 ────────────────────────────────
+  const admit = [];
+
+  // TTM
+  if (s.ttm_decision === 'ttm_yes') {
+    admit.push({ color: 'blue', text: '<strong>TTM 継続</strong>：目標体温 32〜37.5°C（≥ 24時間）。体表冷却または血管内冷却デバイスを使用。体温センサーは食道温または膀胱温。復温は 0.25〜0.5°C/時間でゆっくり行う。発熱（> 37.5°C）は 72時間以上予防する。' });
+    admit.push({ color: 'amber', text: 'TTM 合併症モニタリング：低K・高血糖・凝固障害・Shiveringに注意。血糖 > 180mg/dL → インスリン開始（目標 140–180mg/dL）。' });
+  } else if (s.ttm_decision === 'ttm_no') {
+    admit.push({ color: 'green', text: 'TTM 非適応。ただし発熱（> 37.5°C）は積極的に解熱すること。血糖管理・鎮静管理は継続。' });
+  }
+
+  // 原因別治療
+  if (s.cause === 'acs') {
+    admit.push({ color: 'red', text: '<strong>ACS 治療</strong>：抗血小板薬（DAPT：アスピリン ＋ P2Y12 阻害薬）を開始。スタチン投与。心エコーで壁運動異常・LV 機能評価。機械的合併症（MR・心室中隔穿孔）を除外。' });
+  } else if (s.cause === 'arrhythmia') {
+    admit.push({ color: 'amber', text: '<strong>不整脈精査</strong>：Holter / テレメトリー継続。遺伝性不整脈（Brugada・LQTS・ARVC 等）の鑑別。電解質（K・Mg）の補正。ROSC後の電気的ストームに注意しアミオダロンを継続検討。' });
+  } else if (s.cause === 'pe') {
+    admit.push({ color: 'purple', text: '<strong>肺塞栓治療</strong>：状態が安定すればヘパリン療法へ移行。確定診断（造影 CT）を早期施行。tPA 投与後は 24時間出血合併症に注意。IVC フィルター適応を評価。' });
+  } else if (s.cause === 'respiratory') {
+    admit.push({ color: 'cyan', text: '<strong>呼吸器管理</strong>：肺保護換気（Vt 6ml/kg IBW、PEEP 5〜10cmH₂O）。胸部 CT 確認。溺水・ARDS 合併時は PEEP 高め設定。呼吸器疾患の基礎治療継続。' });
+  }
+
+  // 共通
+  admit.push({ color: 'green', text: '共通管理：SpO₂ 94–98%（高酸素禁止）・PaCO₂ 35–45mmHg（過換気禁止）・MAP ≥ 65mmHg・血糖 140–180mg/dL を目標とした支持療法を継続。' });
+  admit.push({ color: 'blue', text: 'EEG モニタリング：痙攣・サブクリニカル発作の検出。24時間以上の連続 EEG が推奨される（可能な施設で）。' });
+
+  sections.push({
+    title: '🏥 入院後治療計画（ICU フェーズ）',
+    color: 'blue',
+    items: admit,
+  });
+
+  // ── 3. 生命予後 ─────────────────────────────────────
+  const vitalprog = [];
+  let survivalEst = '';
+
+  const isShockable = (s.ecg !== undefined); // if we got to ECG step
+  const isLacHigh = s.labs === 'lac_high';
+  const isComa = s.consciousness === 'coma';
+
+  if (s.bp === 'refractory' || isLacHigh) {
+    survivalEst = '慎重な予後（30日生存率 < 30% と推定）';
+    vitalprog.push({ color: 'red', text: '難治性ショックまたは高乳酸血症は早期死亡の強い予測因子です。集中治療を継続しながら 24〜48時間での再評価が重要。' });
+  } else if (s.bp === 'vaso' || s.labs === 'lac_mid') {
+    survivalEst = '中等度リスク（30日生存率 30〜60% と推定）';
+    vitalprog.push({ color: 'amber', text: '循環支持が必要な状態ですが、適切な介入で回復の可能性があります。乳酸クリアランスと臓器機能を継続的にモニタリング。' });
+  } else {
+    survivalEst = '比較的良好（30日生存率 > 50% と推定）';
+    vitalprog.push({ color: 'green', text: '血行動態は比較的安定しており、生存率は良好です。合併症の予防と再発防止に注力してください。' });
+  }
+
+  vitalprog.push({ color: 'blue', text: `<strong>推定 30日生存率：${survivalEst}</strong>（OHCA 全体平均 10%、IHCA 全体平均 25%。本症例の個別因子を考慮した大まかな推定値です）` });
+
+  sections.push({
+    title: '📊 生命予後 の推定',
+    color: 'purple',
+    items: vitalprog,
+  });
+
+  // ── 4. 神経学的予後 ──────────────────────────────────
+  const neuroprog = [];
+
+  if (isComa) {
+    neuroprog.push({ color: 'amber', text: '<strong>多モーダル神経学的予後評価（72時間以降）を計画</strong>：NSE（48〜72h）・SSEP（N20）・EEG・神経学的診察・頭部 MRI（DWI）を組み合わせて評価。単一指標での判断は避けること。' });
+    neuroprog.push({ color: 'blue', text: 'rCAST スコア算出を推奨（ROSC後 6時間以内に ICU 入室時点で計算可能）。左メニューの「rCAST 計算機」を使用してください。' });
+    if (s.ttm_decision === 'ttm_yes') {
+      neuroprog.push({ color: 'amber', text: 'TTM 施行例では鎮静・低体温の影響が残るため、神経学的評価は<strong>復温 ＋ 薬物洗い出し後（復温完了から 24〜48 時間以降）</strong>に行うこと。' });
+    }
+    neuroprog.push({ color: 'red', text: '⚠️ 早期断定による機会損失に注意：不良予後と早期に断定して治療を中止すると、本来助かるべき患者を見逃す恐れがあります。72h以降に複数指標が一致して初めて治療方針を決定すること。' });
+  } else {
+    neuroprog.push({ color: 'green', text: '意識が保たれており、神経学的予後は良好と期待されます。認知機能・記憶障害の有無を経過観察し、必要に応じてリハビリテーションを。' });
+  }
+
+  sections.push({
+    title: '🧠 神経学的予後の評価計画',
+    color: 'accent',
+    items: neuroprog,
+  });
+
+  // ── 5. 家族説明 ──────────────────────────────────────
+  const family = [];
+
+  family.push({ color: 'blue', text: '<strong>初回説明のポイント</strong>：①蘇生に成功した事実、②現在の状態（意識・血行動態）、③これからの検査・治療の概要、④予後の不確実性について、⑤今後の説明の頻度・担当者を伝える。' });
+
+  if (isComa) {
+    family.push({ color: 'amber', text: '<strong>意識に関する説明</strong>：「現在は眠った状態です。脳へのダメージの程度は、72時間以降に複数の検査を行って初めて正確に評価できます。今の段階では断言できません」と伝える。早期に不良を断言しないこと。' });
+  }
+
+  family.push({ color: 'amber', text: '<strong>予後の伝え方</strong>：統計的な数字（生存率・神経学的転帰率）は参考値として伝え、「この患者さん個人の状態を今後評価する」ことを強調する。家族が過度な不安や過度な期待を抱かないよう配慮する。' });
+  family.push({ color: 'green', text: '<strong>意思決定支援</strong>：患者本人の推定意思（事前指示書・普段の価値観）を早期に確認する。家族が孤立しないよう、多職種（MSW・緩和ケア等）の関与を検討する。' });
+
+  if (s.cause === 'acs') {
+    family.push({ color: 'blue', text: '急性心筋梗塞の場合：発症前の症状（胸痛・呼吸苦）の有無を確認し、発症時の状況を家族から情報収集する。再発リスクに関して今後の生活指導・二次予防についても説明が必要。' });
+  }
+
+  sections.push({
+    title: '👨‍👩‍👧 家族への説明で注意すること',
+    color: 'amber',
+    items: family,
+  });
+
+  // ── Render ────────────────────────────────────────────
+  const colorMap2 = {
+    red: { bg: 'var(--red-bg)', border: 'var(--red)', text: '#7f1d1d' },
+    amber: { bg: 'var(--amber-bg)', border: 'var(--amber)', text: '#78350f' },
+    green: { bg: 'var(--green-bg)', border: 'var(--green)', text: '#14532d' },
+    blue: { bg: 'var(--accent-bg)', border: 'var(--accent)', text: '#1e3a8a' },
+    purple: { bg: 'var(--purple-bg)', border: 'var(--purple)', text: '#4c1d95' },
+    cyan: { bg: 'var(--cyan-bg)', border: 'var(--cyan)', text: '#164e63' },
+    accent: { bg: 'var(--accent-bg)', border: 'var(--accent)', text: '#1e3a8a' },
+    gray: { bg: 'var(--surface3)', border: 'var(--text-muted)', text: 'var(--text-dim)' },
+  };
+
+  return sections.map(sec => `
+    <div class="card" style="margin-bottom:14px;border-color:${colorMap2[sec.color]?.border||'var(--border)'}">
+      <div style="font-family:var(--sans);font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">${sec.title}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${sec.items.map(item => {
+          const cm = colorMap2[item.color] || colorMap2.gray;
+          return `<div style="padding:11px 13px;border-radius:8px;border-left:4px solid ${cm.border};background:${cm.bg};color:${cm.text};font-size:13px;line-height:1.75">${item.text}</div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ══════════ rCAST ══════════
+function calcRcast(){
+  const rhythm  = document.querySelector('input[name="rc_rhythm"]:checked');
+  const witness = document.querySelector('input[name="rc_witness"]:checked');
+  const ph      = document.querySelector('input[name="rc_ph"]:checked');
+  const lac     = document.querySelector('input[name="rc_lac"]:checked');
+  const gcs     = document.querySelector('input[name="rc_gcs"]:checked');
+
+  if(!rhythm||!witness||!ph||!lac||!gcs){
+    document.getElementById('rcast-output').innerHTML=
+      '<div style="color:var(--text-muted);font-size:13px;padding:12px 0">← 5項目を全て選択すると自動計算されます</div>';
+    document.getElementById('rcast-result').className='card blue';
+    return;
+  }
+
+  const score = +rhythm.value + +witness.value + +ph.value + +lac.value + +gcs.value;
+
+  let grade, gradeColor, gradeClass, pct, comment;
+  if(score <= 5.5){
+    grade='低重症度';gradeColor='var(--green)';gradeClass='green';pct='約 60–80%';
+    comment='良好な神経学的転帰が期待できます。積極的な治療継続を。';
+  } else if(score <= 14.0){
+    grade='中等度重症';gradeColor='var(--amber)';gradeClass='amber';pct='約 10–30%';
+    comment='予後は不確実。TTM・集中治療を継続しながら 72h 以降に多モーダル評価を。';
+  } else {
+    grade='高重症度';gradeColor='var(--red)';gradeClass='red';pct='< 5%（ほぼ不良）';
+    comment='不良予後の可能性が高い。ただしスコア単独で治療方針を決定しないこと。72h以降の多モーダル評価を必ず行う。';
+  }
+
+  document.getElementById('rcast-result').className='card '+gradeClass;
+  document.getElementById('rcast-output').innerHTML=`
+    <div style="text-align:center;padding:10px 0 16px">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);letter-spacing:.1em;margin-bottom:6px">rCAST SCORE</div>
+      <div style="font-family:var(--mono);font-size:56px;font-weight:700;color:${gradeColor};line-height:1">${score}</div>
+      <div style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">/20点満点</div>
+    </div>
+    <div style="display:flex;justify-content:center;margin-bottom:14px">
+      <span class="tag ${gradeClass}" style="font-size:14px;padding:4px 14px">${grade}</span>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;font-size:13px;margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-bottom:4px;letter-spacing:.08em">30日良好神経学的転帰（CPC 1–2）の確率</div>
+      <div style="font-size:20px;font-weight:700;color:${gradeColor};font-family:var(--mono)">${pct}</div>
+    </div>
+    <div style="font-size:13px;color:var(--text-dim);line-height:1.7;padding:4px 2px">${comment}</div>
+    <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+      ${[
+        ['初期リズム', rhythm.parentElement.textContent.trim(), +rhythm.value],
+        ['目撃/ROSC', witness.parentElement.textContent.trim(), +witness.value],
+        ['pH', ph.parentElement.textContent.trim(), +ph.value],
+        ['乳酸値', lac.parentElement.textContent.trim(), +lac.value],
+        ['GCS M', gcs.parentElement.textContent.trim(), +gcs.value],
+      ].map(([k,v,pts])=>`
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:11px;flex:1;min-width:80px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);margin-bottom:2px">${k}</div>
+          <div style="color:var(--text-dim)">${v}</div>
+          <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${pts>0?'var(--amber)':'var(--green)'}">+${pts}点</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function resetRcast(){
+  document.querySelectorAll('input[name^="rc_"]').forEach(r=>r.checked=false);
+  document.getElementById('rcast-output').innerHTML=
+    '<div style="color:var(--text-muted);font-size:13px;padding:12px 0">← 5項目を全て選択すると自動計算されます</div>';
+  document.getElementById('rcast-result').className='card blue';
+}
+
+// ══════════ DOSE CALC ══════════
+function calcDoses(){
+  const w=parseFloat(document.getElementById('ptW').value)||60;
+  document.getElementById('doseDisp').innerHTML=`<div class="gap" style="margin-top:8px">${[
+    ['アドレナリン（1回）','1 mg','var(--amber)'],
+    ['アミオダロン（初回）','300 mg','var(--amber)'],
+    [`リドカイン（1.5mg/kg）`,`${(w*1.5).toFixed(0)} mg`,'var(--amber)'],
+    [`重炭酸Na（1mEq/kg）`,`${w.toFixed(0)} mEq`,'var(--cyan)'],
+    ['除細動（二相性初回）','150–200 J','var(--accent)'],
+  ].map(([l,v,c])=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-width:128px"><div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-bottom:2px">${l}</div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${c}">${v}</div></div>`).join('')}</div>`;
+}
+
+// init
+calcDoses(); selRhythm('vf');
+</script>
+</body>
+</html>
